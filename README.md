@@ -1,5 +1,7 @@
 # Strategy_Auto_Trader_Mobile_UI
 
+NOT YET FINISHED - STILL UNDER DEVELOPMENT
+
 Android MAUI app + ASP.NET Core API for remotely monitoring and controlling your Strategy_Auto_Trader positions. View live positions, closed trade history, and daemon health from your phone—on home WiFi (Phase 1) or remotely via Tailscale (Phase 2+).
 
 ## Status
