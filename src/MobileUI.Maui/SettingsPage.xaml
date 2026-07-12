@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MobileUI.Maui.SettingsPage"
+             Title="Settings"
+             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16,12,16,24" Spacing="8">
+
+            <Label Text="API CONFIGURATION" Style="{StaticResource SectionHeader}"/>
+
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="14">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="API URL" Style="{StaticResource CaptionLabel}" FontAttributes="Bold"/>
+                        <Border Style="{StaticResource FieldFrame}">
+                            <Entry x:Name="ApiUrlEntry"
+                                   Style="{StaticResource SettingsEntry}"
+                                   Placeholder="https://100.123.45.67:5001"
+                                   Text="{Binding ApiUrl}"
+                                   Keyboard="Url"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="API KEY" Style="{StaticResource CaptionLabel}" FontAttributes="Bold"/>
+                        <Border Style="{StaticResource FieldFrame}">
+                            <Entry x:Name="ApiKeyEntry"
+                                   Style="{StaticResource SettingsEntry}"
+                                   Placeholder="Enter your API key"
+                                   Text="{Binding ApiKey}"
+                                   IsPassword="True"/>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="CERTIFICATE THUMBPRINT" Style="{StaticResource CaptionLabel}" FontAttributes="Bold"/>
+                        <Border Style="{StaticResource FieldFrame}">
+                            <Entry x:Name="ThumbprintEntry"
+                                   Style="{StaticResource SettingsEntry}"
+                                   Placeholder="Enter certificate thumbprint"
+                                   Text="{Binding CertificateThumbprint}"
+                                   FontFamily="Courier"
+                                   FontSize="12"/>
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Save Settings"
+                    Style="{StaticResource PrimaryButton}"
+                    Command="{Binding SaveCommand}"
+                    Margin="0,8,0,0"/>
+
+            <Button Text="Test Connection"
+                    Style="{StaticResource SecondaryButton}"
+                    Command="{Binding TestConnectionCommand}"/>
+
+            <!-- Status message -->
+            <Border Style="{StaticResource Card}"
+                    IsVisible="{Binding ShowStatusMessage}"
+                    Margin="0,4,0,0"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource PillBackground}, Dark={StaticResource PillBackgroundDark}}"
+                    Stroke="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource AccentDark}}">
+                <Label Text="{Binding StatusMessage}"
+                       FontSize="13"
+                       TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"/>
+            </Border>
+
+            <Label Text="SETUP GUIDE" Style="{StaticResource SectionHeader}"/>
+
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="How to get these values" FontSize="14" FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"/>
+                    <Label Text="1.  On your PC, run: tailscale ip -4" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
+                    <Label Text="2.  Use that IP in the API URL (https://[IP]:5001)" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
+                    <Label Text="3.  API Key: from generate-api-key.ps1 output" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
+                    <Label Text="4.  Thumbprint: from generate-certificate.ps1 output" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

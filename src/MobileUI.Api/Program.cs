@@ -26,6 +26,9 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
         ?? Environment.GetEnvironmentVariable("CERTIFICATE_THUMBPRINT")
         ?? throw new InvalidOperationException("Certificate thumbprint not configured");
 
+    var tailscaleIp = builder.Configuration["Security:TailscaleInterfaceIp"]
+        ?? Environment.GetEnvironmentVariable("TAILSCALE_INTERFACE_IP");
+
     if (isDevelopment)
     {
         serverOptions.ListenAnyIP(5000);
@@ -49,19 +52,61 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     }
     else
     {
-        serverOptions.ListenAnyIP(5001, listenOptions =>
+        if (!string.IsNullOrEmpty(tailscaleIp))
         {
-            var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-            store.Open(OpenFlags.ReadOnly);
-            var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
-
-            if (certs.Count > 0)
+            Console.WriteLine($"Binding to Tailscale interface: {tailscaleIp}");
+            try
             {
-                listenOptions.UseHttps(certs[0]);
-            }
+                serverOptions.Listen(System.Net.IPAddress.Parse(tailscaleIp), 5001, listenOptions =>
+                {
+                    var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                    store.Open(OpenFlags.ReadOnly);
+                    var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
 
-            store.Close();
-        });
+                    if (certs.Count > 0)
+                    {
+                        listenOptions.UseHttps(certs[0]);
+                    }
+
+                    store.Close();
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to bind to Tailscale IP {tailscaleIp}: {ex.Message}");
+                Console.WriteLine("Falling back to 0.0.0.0");
+                serverOptions.ListenAnyIP(5001, listenOptions =>
+                {
+                    var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                    store.Open(OpenFlags.ReadOnly);
+                    var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
+
+                    if (certs.Count > 0)
+                    {
+                        listenOptions.UseHttps(certs[0]);
+                    }
+
+                    store.Close();
+                });
+            }
+        }
+        else
+        {
+            Console.WriteLine("No Tailscale IP configured. Binding to 0.0.0.0");
+            serverOptions.ListenAnyIP(5001, listenOptions =>
+            {
+                var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                store.Open(OpenFlags.ReadOnly);
+                var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
+
+                if (certs.Count > 0)
+                {
+                    listenOptions.UseHttps(certs[0]);
+                }
+
+                store.Close();
+            });
+        }
     }
 });
 

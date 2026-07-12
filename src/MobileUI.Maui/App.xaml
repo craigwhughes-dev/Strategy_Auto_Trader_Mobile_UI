@@ -12,6 +12,7 @@
             </ResourceDictionary.MergedDictionaries>
             <converters:PnlColorConverter x:Key="PnlColorConverter" />
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:BoolToStatusTextConverter x:Key="BoolToStatusTextConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

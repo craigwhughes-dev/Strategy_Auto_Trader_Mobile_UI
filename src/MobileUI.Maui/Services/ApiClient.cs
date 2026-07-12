@@ -11,6 +11,8 @@ public interface IApiClient
     Task<DaemonStatus> GetHealthAsync();
     void SetBaseUrl(string url);
     void SetCertificateThumbprint(string thumbprint);
+    Task SetApiKeyAsync(string apiKey);
+    Task<string> GetApiKeyAsync();
     string GetBaseUrl();
 }
 
@@ -19,8 +21,10 @@ public class ApiClient : IApiClient
     private readonly HttpClient _httpClient;
     private string _baseUrl;
     private string _expectedCertificateThumbprint;
+    private string _apiKey;
     private const string BaseUrlPrefsKey = "api_base_url";
     private const string ThumbprintPrefsKey = "api_cert_thumbprint";
+    private const string ApiKeyPrefsKey = "api_key";
     private const string DefaultBaseUrl = "http://192.168.1.100:5000";
     private const string DefaultThumbprint = "7618F28C90EE396840E9B980773F8A69147E86CC";
 
@@ -28,6 +32,7 @@ public class ApiClient : IApiClient
     {
         _baseUrl = Preferences.Get(BaseUrlPrefsKey, DefaultBaseUrl);
         _expectedCertificateThumbprint = Preferences.Get(ThumbprintPrefsKey, DefaultThumbprint);
+        _apiKey = SecureStorage.GetAsync(ApiKeyPrefsKey).GetAwaiter().GetResult() ?? "";
 
         var handler = new HttpClientHandler();
         handler.ServerCertificateCustomValidationCallback = ValidateServerCertificate;
@@ -36,6 +41,8 @@ public class ApiClient : IApiClient
         {
             Timeout = TimeSpan.FromSeconds(30)
         };
+
+        UpdateDefaultHeaders();
     }
 
     private bool ValidateServerCertificate(
@@ -48,13 +55,17 @@ public class ApiClient : IApiClient
             return false;
 
         var thumbprint = certificate.Thumbprint.ToUpperInvariant();
+
+        // If thumbprint is empty/default, allow any certificate (development only)
+        if (string.IsNullOrEmpty(_expectedCertificateThumbprint))
+            return true;
+
+        // Otherwise, thumbprint must match
         if (thumbprint != _expectedCertificateThumbprint)
             return false;
 
-        if (errors == System.Net.Security.SslPolicyErrors.None)
-            return true;
-
-        return errors == System.Net.Security.SslPolicyErrors.RemoteCertificateChainErrors;
+        // Accept self-signed cert errors as long as thumbprint matches
+        return true;
     }
 
     public void SetBaseUrl(string url)
@@ -70,6 +81,27 @@ public class ApiClient : IApiClient
     }
 
     public string GetBaseUrl() => _baseUrl;
+
+    public async Task SetApiKeyAsync(string apiKey)
+    {
+        _apiKey = apiKey;
+        await SecureStorage.SetAsync(ApiKeyPrefsKey, apiKey);
+        UpdateDefaultHeaders();
+    }
+
+    public async Task<string> GetApiKeyAsync()
+    {
+        return await SecureStorage.GetAsync(ApiKeyPrefsKey) ?? "";
+    }
+
+    private void UpdateDefaultHeaders()
+    {
+        _httpClient.DefaultRequestHeaders.Clear();
+        if (!string.IsNullOrEmpty(_apiKey))
+        {
+            _httpClient.DefaultRequestHeaders.Add("X-Api-Key", _apiKey);
+        }
+    }
 
     public async Task<List<Position>> GetPositionsAsync()
     {

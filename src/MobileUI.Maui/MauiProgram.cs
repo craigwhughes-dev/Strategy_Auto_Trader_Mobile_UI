@@ -17,14 +17,19 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		builder.Services.AddSingleton<IApiClient, ApiClient>();
+		builder.Services.AddSingleton<ApiClient>();
+		builder.Services.AddSingleton<IApiClient>(sp => sp.GetRequiredService<ApiClient>());
 		builder.Services.AddSingleton<PositionsViewModel>();
+		builder.Services.AddSingleton<SettingsViewModel>();
 		builder.Services.AddSingleton<MainPage>();
+		builder.Services.AddSingleton<SettingsPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
 
-		return builder.Build();
+		var app = builder.Build();
+		ServiceHelper.Init(app.Services);
+		return app;
 	}
 }
