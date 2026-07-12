@@ -1,0 +1,15 @@
+<api>
+  <jcw-types>
+    <type name="MainActivity" package="crc6442dbbbeec270adb9" application_java_class="android.app.Application" mono_runtime_initialization="mono.MonoPackageManager.LoadApplication (context);" extends_type="crc6488302ad6e9e4df1a.MauiAppCompatActivity" partial_assembly_qualified_name="MobileUI.Maui.MainActivity, MobileUI.Maui">
+      <constructors>
+        <constructor name="MainActivity" method="n_.ctor:()V:" jni_signature="()V" managed_parameters="" retval="void" is_dynamically_registered="True" />
+        <constructor name="MainActivity" method="n_.ctor:(I)V:" jni_signature="(I)V" managed_parameters="System.Int32, System.Private.CoreLib" params="int p0" retval="void" is_dynamically_registered="True" super_call="p0" activate_call="p0" />
+      </constructors>
+    </type>
+    <type name="MainApplication" package="crc6442dbbbeec270adb9" application_java_class="android.app.Application" mono_runtime_initialization="mono.MonoPackageManager.LoadApplication (context);" extends_type="crc6488302ad6e9e4df1a.MauiApplication" is_application="True" partial_assembly_qualified_name="MobileUI.Maui.MainApplication, MobileUI.Maui" application_constructor="MainApplication" />
+  </jcw-types>
+  <acw-types partial-assembly-name="MobileUI.Maui" module-name="MobileUI.Maui.dll">
+    <type assembly-qualified-name="MobileUI.Maui.MainActivity, MobileUI.Maui, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" compat-jni-name="mobileui.maui.MainActivity" java-key="crc6442dbbbeec270adb9.MainActivity" managed-key="MobileUI.Maui.MainActivity" partial-assembly-qualified-name="MobileUI.Maui.MainActivity, MobileUI.Maui" />
+    <type assembly-qualified-name="MobileUI.Maui.MainApplication, MobileUI.Maui, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" compat-jni-name="mobileui.maui.MainApplication" java-key="crc6442dbbbeec270adb9.MainApplication" managed-key="MobileUI.Maui.MainApplication" partial-assembly-qualified-name="MobileUI.Maui.MainApplication, MobileUI.Maui" />
+  </acw-types>
+</api>

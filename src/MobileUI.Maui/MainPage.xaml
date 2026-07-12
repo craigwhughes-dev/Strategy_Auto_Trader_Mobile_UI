@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MobileUI.Maui.MainPage"
+             Title="Trading Status">
+
+    <RefreshView Command="{Binding RefreshCommand}"
+                 IsRefreshing="{Binding IsLoading}">
+        <ScrollView>
+            <VerticalStackLayout Padding="15" Spacing="15">
+                <!-- Status Banner -->
+                <Grid ColumnDefinitions="*,*" RowDefinitions="auto,auto" Padding="10" RowSpacing="5">
+                    <Label Text="Status:" FontAttributes="Bold" Grid.Row="0" Grid.Column="0"/>
+                    <Label Text="{Binding StatusMessage}" Grid.Row="0" Grid.Column="1" HorizontalTextAlignment="End"/>
+
+                    <Label Text="Daemon:" FontAttributes="Bold" Grid.Row="1" Grid.Column="0"/>
+                    <Label Text="{Binding DaemonRunning, StringFormat='{0:Online}'}"
+                           Grid.Row="1" Grid.Column="1" HorizontalTextAlignment="End"
+                           TextColor="{Binding DaemonRunning, Converter={StaticResource BoolToColorConverter}}"/>
+                </Grid>
+
+                <!-- Flags -->
+                <StackLayout Orientation="Horizontal" Spacing="10">
+                    <Label Text="🔄 Paper" IsVisible="{Binding DryRun}" FontAttributes="Bold" TextColor="Orange"/>
+                    <Label Text="⛔ Halted" IsVisible="{Binding HaltNewEntries}" FontAttributes="Bold" TextColor="Red"/>
+                </StackLayout>
+
+                <!-- Positions Section -->
+                <Label Text="Open Positions" FontAttributes="Bold" FontSize="18" Margin="0,10,0,5"/>
+
+                <CollectionView ItemsSource="{Binding Positions}" SelectionMode="Single">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <StackLayout Padding="10" Spacing="5" BackgroundColor="#f0f0f0" Margin="0,5">
+                                <Label Text="{Binding Ticker}" FontAttributes="Bold" FontSize="16"/>
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="20">
+                                    <StackLayout Grid.Column="0">
+                                        <Label Text="{Binding Quantity, StringFormat='Qty: {0:F}'}" FontSize="Small"/>
+                                        <Label Text="{Binding FillPrice, StringFormat='Entry: {0:F2}'}" FontSize="Small"/>
+                                    </StackLayout>
+                                    <Label Grid.Column="1" Text="{Binding Currency}" HorizontalTextAlignment="End"/>
+                                </Grid>
+                                <Label Text="{Binding CurrentPrice, StringFormat='Current: {0:F2}'}" FontSize="Small"/>
+                                <Label Text="{Binding UnrealizedPnl, StringFormat='P&amp;L: {0:+0.00;-0.00;0.00}'}"
+                                       TextColor="{Binding UnrealizedPnl, Converter={StaticResource PnlColorConverter}}" FontAttributes="Bold"/>
+                            </StackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Recent Trades Section -->
+                <Label Text="Recent Trades" FontAttributes="Bold" FontSize="18" Margin="0,10,0,5"/>
+
+                <CollectionView ItemsSource="{Binding RecentTrades}" SelectionMode="Single">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <StackLayout Padding="10" Spacing="3" BackgroundColor="#f5f5f5" Margin="0,5">
+                                <Label Text="{Binding Ticker}" FontAttributes="Bold"/>
+                                <Label Text="{Binding DateClosed, StringFormat='{0:d}'}" FontSize="Small"/>
+                                <Label Text="{Binding RoundtripPnl, StringFormat='P&amp;L: {0:+0.00;-0.00;0.00}'}"
+                                       TextColor="{Binding RoundtripPnl, Converter={StaticResource PnlColorConverter}}"/>
+                            </StackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>

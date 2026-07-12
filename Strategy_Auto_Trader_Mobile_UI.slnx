@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MobileUI.Api/MobileUI.Api.csproj" />
+    <Project Path="src/MobileUI.Maui/MobileUI.Maui.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MobileUI.Api.Tests/MobileUI.Api.Tests.csproj" />
+    <Project Path="tests/MobileUI.Maui.Tests/MobileUI.Maui.Tests.csproj" />
+  </Folder>
+</Solution>

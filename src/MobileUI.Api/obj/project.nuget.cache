@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "dgSpecHash": "rhn7VWPu/nI=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Craig\\.claude\\skills\\Strategy_Auto_Trader_Mobile_UI\\src\\MobileUI.Api\\MobileUI.Api.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Craig\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.9\\microsoft.aspnetcore.openapi.10.0.9.nupkg.sha512",
+    "C:\\Users\\Craig\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Microsoft.OpenApi' 2.0.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-v5pm-xwqc-g5wc",
+      "projectPath": "C:\\Users\\Craig\\.claude\\skills\\Strategy_Auto_Trader_Mobile_UI\\src\\MobileUI.Api\\MobileUI.Api.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Craig\\.claude\\skills\\Strategy_Auto_Trader_Mobile_UI\\src\\MobileUI.Api\\MobileUI.Api.csproj",
+      "libraryId": "Microsoft.OpenApi",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}
