@@ -50,9 +50,13 @@ public class JournalReader : IJournalReader
 
                 try
                 {
+                    var ticker = GetField(fields, headerMap, "ticker", "")?.ToUpperInvariant() ?? "";
+                    if (string.IsNullOrEmpty(ticker))
+                        continue;
+
                     var record = new TradeRecord
                     {
-                        Ticker = GetField(fields, headerMap, "ticker", "")?.ToUpperInvariant() ?? "",
+                        Ticker = ticker,
                         Market = GetField(fields, headerMap, "market", "") ?? "UNKNOWN",
                         Currency = GetField(fields, headerMap, "currency", "") ?? "USD",
                         DateOpened = TryParseDate(GetField(fields, headerMap, "date_opened", "")) ?? DateTime.MinValue,
@@ -60,11 +64,10 @@ public class JournalReader : IJournalReader
                         EntryPrice = TryParseDouble(GetField(fields, headerMap, "entry_price", "")) ?? 0,
                         ExitPrice = TryParseDouble(GetField(fields, headerMap, "exit_price", "")) ?? 0,
                         Quantity = TryParseDouble(GetField(fields, headerMap, "quantity", "")) ?? 0,
-                        RoundtripPnl = TryParseDouble(GetField(fields, headerMap, "roundtrip_pnl", "")) ?? 0,
+                        RoundtripPnl = TryParseDouble(GetField(fields, headerMap, "pnl_usd", "")) ?? 0,
                     };
 
-                    if (!string.IsNullOrEmpty(record.Ticker))
-                        trades.Add(record);
+                    trades.Add(record);
                 }
                 catch (Exception ex)
                 {

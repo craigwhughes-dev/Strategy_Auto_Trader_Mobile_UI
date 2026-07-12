@@ -20,4 +20,9 @@
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../src/MobileUI.Maui/MobileUI.Maui.csproj" />
+    <ProjectReference Include="../../src/MobileUI.Api/MobileUI.Api.csproj" />
+  </ItemGroup>
+
 </Project>

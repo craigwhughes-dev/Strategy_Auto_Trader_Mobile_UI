@@ -58,11 +58,13 @@ public class PositionsViewModel : BindableObject
 
     public ICommand RefreshCommand { get; }
 
-    public PositionsViewModel()
+    public PositionsViewModel() : this(new ApiClient())
     {
-        var apiClient = new ApiClient();
-        _apiClient = apiClient;
+    }
 
+    public PositionsViewModel(IApiClient apiClient)
+    {
+        _apiClient = apiClient;
         RefreshCommand = new Command(async () => await RefreshAsync());
     }
 

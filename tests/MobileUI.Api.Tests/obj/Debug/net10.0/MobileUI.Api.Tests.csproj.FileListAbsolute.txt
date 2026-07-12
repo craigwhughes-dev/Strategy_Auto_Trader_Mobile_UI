@@ -25,9 +25,7 @@ C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.
 C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.Tests\bin\Debug\net10.0\MobileUI.Api.Tests.dll
 C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.Tests\bin\Debug\net10.0\MobileUI.Api.Tests.pdb
 C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.Tests\bin\Debug\net10.0\Microsoft.ApplicationInsights.dll
-C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.Tests\bin\Debug\net10.0\Microsoft.AspNetCore.OpenApi.dll
 C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.Tests\bin\Debug\net10.0\Microsoft.VisualStudio.CodeCoverage.Shim.dll
-C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.Tests\bin\Debug\net10.0\Microsoft.OpenApi.dll
 C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.Tests\bin\Debug\net10.0\Microsoft.Testing.Extensions.Telemetry.dll
 C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.Tests\bin\Debug\net10.0\Microsoft.Testing.Extensions.TrxReport.Abstractions.dll
 C:\Users\Craig\.claude\skills\Strategy_Auto_Trader_Mobile_UI\tests\MobileUI.Api.Tests\bin\Debug\net10.0\Microsoft.Testing.Extensions.VSTestBridge.dll

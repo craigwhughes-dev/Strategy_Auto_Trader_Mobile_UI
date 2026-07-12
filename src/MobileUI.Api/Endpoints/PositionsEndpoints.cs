@@ -54,19 +54,6 @@ public static class PositionsEndpoints
     private static IResult GetHealth(IStatusReader statusReader)
     {
         var status = statusReader.ReadStatus();
-
-        var response = new
-        {
-            status.DaemonRunning,
-            status.HeartbeatAgeSeconds,
-            status.DryRun,
-            status.HaltNewEntries,
-            status.ReconciliationDiscrepancies,
-            status.LastReconcileDate,
-            status.TradesDaily,
-            status.Markets,
-        };
-
-        return Results.Ok(response);
+        return Results.Ok(status);
     }
 }

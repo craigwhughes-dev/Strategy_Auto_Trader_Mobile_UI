@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "dgSpecHash": "tLlSp++LmVU=",
-  "success": true,
+  "dgSpecHash": "fEMbiJeBiDA=",
+  "success": false,
   "projectFilePath": "C:\\Users\\Craig\\.claude\\skills\\Strategy_Auto_Trader_Mobile_UI\\tests\\MobileUI.Maui.Tests\\MobileUI.Maui.Tests.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Craig\\.nuget\\packages\\coverlet.collector\\6.0.4\\coverlet.collector.6.0.4.nupkg.sha512",
@@ -20,5 +20,17 @@
     "C:\\Users\\Craig\\.nuget\\packages\\nunit.analyzers\\4.7.0\\nunit.analyzers.4.7.0.nupkg.sha512",
     "C:\\Users\\Craig\\.nuget\\packages\\nunit3testadapter\\5.0.0\\nunit3testadapter.5.0.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1201",
+      "level": "Error",
+      "message": "Project MobileUI.Maui is not compatible with net10.0 (.NETCoreApp,Version=v10.0). Project MobileUI.Maui supports:\r\n  - net10.0-android36.0 (.NETCoreApp,Version=v10.0)\r\n  - net10.0-ios26.5 (.NETCoreApp,Version=v10.0)\r\n  - net10.0-maccatalyst26.5 (.NETCoreApp,Version=v10.0)\r\n  - net10.0-windows10.0.19041 (.NETCoreApp,Version=v10.0)",
+      "projectPath": "C:\\Users\\Craig\\.claude\\skills\\Strategy_Auto_Trader_Mobile_UI\\tests\\MobileUI.Maui.Tests\\MobileUI.Maui.Tests.csproj",
+      "filePath": "C:\\Users\\Craig\\.claude\\skills\\Strategy_Auto_Trader_Mobile_UI\\tests\\MobileUI.Maui.Tests\\MobileUI.Maui.Tests.csproj",
+      "libraryId": "MobileUI.Maui",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
 }

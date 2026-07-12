@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MobileUI.Maui.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3ca86c66e5cc3d7b6ebee3941775547e43f52d27")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f42cd99a4968cefbf210706adf5dc45ecd9e910e")]
 [assembly: System.Reflection.AssemblyProductAttribute("MobileUI.Maui.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MobileUI.Maui.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

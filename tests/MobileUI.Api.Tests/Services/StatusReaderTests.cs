@@ -39,20 +39,19 @@ public class StatusReaderTests
     public void ReadStatus_WithValidAppStatus_ParsesCorrectly()
     {
         var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
-        var validJson = """
-{
-  "schema_version": 1,
-  "heartbeat_utc": "2026-07-12T16:11:25.995075+00:00",
-  "daemon_pid": 17852,
-  "dry_run": false,
-  "halt_new_entries": false,
-  "reconciliation_discrepancies": [],
-  "last_reconcile_date": "2026-07-06",
-  "trades_today": {"date": "2026-07-07", "buys": 0, "sells": 0},
-  "markets": {"ftse": {"in_trading_hours": false, "last_cycle_hour": -1}},
-  "positions": {}
-}
-""";
+        var recentHeartbeat = DateTime.UtcNow.ToString("O");
+        var validJson = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{recentHeartbeat}"",
+  ""daemon_pid"": 17852,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{""ftse"": {{""in_trading_hours"": false, ""last_cycle_hour"": -1}}}},
+  ""positions"": {{}}
+}}";
 
         File.WriteAllText(testFile, validJson);
 
@@ -71,6 +70,119 @@ public class StatusReaderTests
     {
         var status = _reader.ReadStatus();
         Assert.That(status.DaemonRunning, Is.False);
+    }
+
+    [Test]
+    public void ReadStatus_WithHeartbeatExactlyNow_ShowsZeroAge()
+    {
+        var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
+        var nowUtc = DateTimeOffset.UtcNow.ToString("O");
+        var json = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{nowUtc}"",
+  ""daemon_pid"": 123,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{}},
+  ""positions"": {{}}
+}}";
+
+        File.WriteAllText(testFile, json);
+
+        var status = _reader.ReadStatus();
+
+        Assert.That(status.HeartbeatAgeSeconds, Is.GreaterThanOrEqualTo(0), "Heartbeat age should be non-negative");
+        Assert.That(status.HeartbeatAgeSeconds, Is.LessThanOrEqualTo(2), "Heartbeat age should be nearly zero");
+
+        File.Delete(testFile);
+    }
+
+    [Test]
+    public void ReadStatus_WithHeartbeatAgeAround60Seconds_IsAccurate()
+    {
+        var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
+        var sixtySecondsAgo = DateTimeOffset.UtcNow.AddSeconds(-60).ToString("O");
+        var json = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{sixtySecondsAgo}"",
+  ""daemon_pid"": 123,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{}},
+  ""positions"": {{}}
+}}";
+
+        File.WriteAllText(testFile, json);
+
+        var status = _reader.ReadStatus();
+
+        Assert.That(status.HeartbeatAgeSeconds, Is.GreaterThanOrEqualTo(59), "Heartbeat age should be ~60s");
+        Assert.That(status.HeartbeatAgeSeconds, Is.LessThanOrEqualTo(61), "Heartbeat age should not exceed 61s");
+        Assert.That(status.DaemonRunning, Is.True, "Daemon should be running (60s < 180s threshold)");
+
+        File.Delete(testFile);
+    }
+
+    [Test]
+    public void ReadStatus_WithStaleHeartbeat_DetectsAsNotRunning()
+    {
+        var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
+        var fourMinutesAgo = DateTimeOffset.UtcNow.AddSeconds(-240).ToString("O");
+        var json = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{fourMinutesAgo}"",
+  ""daemon_pid"": 123,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{}},
+  ""positions"": {{}}
+}}";
+
+        File.WriteAllText(testFile, json);
+
+        var status = _reader.ReadStatus();
+
+        Assert.That(status.HeartbeatAgeSeconds, Is.GreaterThan(180), "Heartbeat age should exceed stale threshold");
+        Assert.That(status.DaemonRunning, Is.False, "Daemon should be marked as not running");
+
+        File.Delete(testFile);
+    }
+
+    [Test]
+    public void ReadStatus_WithIso8601PlusOffsetTimestamp_ParsesCorrectly()
+    {
+        var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
+        var nowWithOffset = DateTimeOffset.UtcNow.ToString("O");
+        var json = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{nowWithOffset}"",
+  ""daemon_pid"": 123,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{}},
+  ""positions"": {{}}
+}}";
+
+        File.WriteAllText(testFile, json);
+
+        var status = _reader.ReadStatus();
+
+        Assert.That(status.HeartbeatAgeSeconds, Is.GreaterThanOrEqualTo(0), "Negative heartbeat age indicates timezone parsing error");
+        Assert.That(status.DaemonRunning, Is.True, "Should parse ISO 8601 with offset correctly");
+
+        File.Delete(testFile);
     }
 
     [Test]

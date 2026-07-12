@@ -25,17 +25,6 @@
           }
         }
       },
-      "Microsoft.AspNetCore.OpenApi/10.0.9": {
-        "dependencies": {
-          "Microsoft.OpenApi": "2.0.0"
-        },
-        "runtime": {
-          "lib/net10.0/Microsoft.AspNetCore.OpenApi.dll": {
-            "assemblyVersion": "10.0.9.0",
-            "fileVersion": "10.0.926.27113"
-          }
-        }
-      },
       "Microsoft.CodeCoverage/17.14.0": {
         "runtime": {
           "lib/net8.0/Microsoft.VisualStudio.CodeCoverage.Shim.dll": {
@@ -48,14 +37,6 @@
         "dependencies": {
           "Microsoft.CodeCoverage": "17.14.0",
           "Microsoft.TestPlatform.TestHost": "17.14.0"
-        }
-      },
-      "Microsoft.OpenApi/2.0.0": {
-        "runtime": {
-          "lib/net8.0/Microsoft.OpenApi.dll": {
-            "assemblyVersion": "2.0.0.0",
-            "fileVersion": "2.0.0.0"
-          }
         }
       },
       "Microsoft.Testing.Extensions.Telemetry/1.5.3": {
@@ -549,9 +530,6 @@
         }
       },
       "MobileUI.Api/1.0.0": {
-        "dependencies": {
-          "Microsoft.AspNetCore.OpenApi": "10.0.9"
-        },
         "runtime": {
           "MobileUI.Api.dll": {
             "assemblyVersion": "1.0.0.0",
@@ -574,13 +552,6 @@
       "path": "microsoft.applicationinsights/2.22.0",
       "hashPath": "microsoft.applicationinsights.2.22.0.nupkg.sha512"
     },
-    "Microsoft.AspNetCore.OpenApi/10.0.9": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-1ihb8FO9cGgEK1/m3CTtT/SfnynwmiZib0W2pcDVj3KSWk/Sca4VOXEtaptKQc582zpFrzTFiwkGRCglt6H+WQ==",
-      "path": "microsoft.aspnetcore.openapi/10.0.9",
-      "hashPath": "microsoft.aspnetcore.openapi.10.0.9.nupkg.sha512"
-    },
     "Microsoft.CodeCoverage/17.14.0": {
       "type": "package",
       "serviceable": true,
@@ -594,13 +565,6 @@
       "sha512": "sha512-rTtdOm6C96q9QgP3mS8nUGPGPh5Xm2HnBYJggNmNrJ3LDmX9lJuUIgnJEfvX6wSQY4swUMiCcIXd3OkjhYCgtw==",
       "path": "microsoft.net.test.sdk/17.14.0",
       "hashPath": "microsoft.net.test.sdk.17.14.0.nupkg.sha512"
-    },
-    "Microsoft.OpenApi/2.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-GGYLfzV/G/ct80OZ45JxnWP7NvMX1BCugn/lX7TH5o0lcVaviavsLMTxmFV2AybXWjbi3h6FF1vgZiTK6PXndw==",
-      "path": "microsoft.openapi/2.0.0",
-      "hashPath": "microsoft.openapi.2.0.0.nupkg.sha512"
     },
     "Microsoft.Testing.Extensions.Telemetry/1.5.3": {
       "type": "package",

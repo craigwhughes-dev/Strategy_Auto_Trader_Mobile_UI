@@ -46,7 +46,8 @@ public class StatusReader : IStatusReader
             }
 
             var heartbeatUtc = root.GetProperty("heartbeat_utc").GetString();
-            var heartbeatAge = (int?)(DateTime.UtcNow - DateTime.Parse(heartbeatUtc!)).TotalSeconds;
+            var heartbeatOffset = DateTimeOffset.Parse(heartbeatUtc!);
+            var heartbeatAge = (int?)(DateTimeOffset.UtcNow - heartbeatOffset).TotalSeconds;
 
             var status = new DaemonStatus
             {
@@ -56,6 +57,9 @@ public class StatusReader : IStatusReader
                 HaltNewEntries = root.GetProperty("halt_new_entries").GetBoolean(),
                 LastReconcileDate = root.GetProperty("last_reconcile_date").GetString(),
             };
+
+            _logger.LogInformation("✓ Daemon status read: Running={DaemonRunning}, HeartbeatAge={Age}s, DryRun={DryRun}, HaltNewEntries={Halt}",
+                status.DaemonRunning, status.HeartbeatAgeSeconds, status.DryRun, status.HaltNewEntries);
 
             if (root.TryGetProperty("reconciliation_discrepancies", out var discrepancies))
             {
@@ -161,6 +165,16 @@ public class StatusReader : IStatusReader
                 };
 
                 positions[ticker] = position;
+            }
+
+            if (positions.Count == 0)
+            {
+                _logger.LogInformation("✓ No open positions found (market may be closed or all positions closed)");
+            }
+            else
+            {
+                _logger.LogInformation("✓ Loaded {PositionCount} open position(s): {Tickers}",
+                    positions.Count, string.Join(", ", positions.Keys));
             }
         }
         catch (Exception ex)
