@@ -42,6 +42,10 @@ public class CommandManager : ICommandManager
         if (!positions.ContainsKey(normalizedTicker))
             throw new InvalidOperationException($"Position {ticker} not found");
 
+        var existingCommands = await GetPendingCommandsAsync();
+        if (existingCommands.Any(c => c.Action == "SELL" && c.Ticker == normalizedTicker && c.Status == "pending"))
+            throw new InvalidOperationException($"A pending SELL command for {ticker} already exists");
+
         var command = new TradeCommand
         {
             Action = "SELL",
@@ -136,8 +140,16 @@ public class CommandManager : ICommandManager
             return false;
         }
 
-        File.Delete(pendingPath);
-        _logger.LogInformation("Cancelled command {CommandId}", id);
-        return true;
+        try
+        {
+            File.Delete(pendingPath);
+            _logger.LogInformation("Cancelled command {CommandId}", id);
+            return true;
+        }
+        catch (FileNotFoundException)
+        {
+            _logger.LogWarning("Command {CommandId} moved by daemon during cancel attempt", id);
+            return false;
+        }
     }
 }

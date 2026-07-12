@@ -174,7 +174,6 @@ public class TradeEndpointsTests
             {
                 Id = commandId,
                 Status = command?.Status ?? "pending",
-                IsQueued = false,
                 Message = $"Sell order queued for {request.Ticker}"
             });
         }
@@ -186,23 +185,15 @@ public class TradeEndpointsTests
 
     private async Task<IResult> InvokeSellAllEndpoint(ICommandManager manager)
     {
-        try
-        {
-            var commandId = await manager.CreateSellAllCommandAsync();
-            var command = await manager.GetCommandAsync(commandId);
+        var commandId = await manager.CreateSellAllCommandAsync();
+        var command = await manager.GetCommandAsync(commandId);
 
-            return Results.Accepted($"/api/trades/commands/{commandId}", new CommandResponse
-            {
-                Id = commandId,
-                Status = command?.Status ?? "pending",
-                IsQueued = false,
-                Message = "Sell all positions queued"
-            });
-        }
-        catch (Exception)
+        return Results.Accepted($"/api/trades/commands/{commandId}", new CommandResponse
         {
-            return Results.StatusCode(500);
-        }
+            Id = commandId,
+            Status = command?.Status ?? "pending",
+            Message = "Sell all positions queued"
+        });
     }
 
     private async Task<IResult> InvokeGetPendingCommandsEndpoint(ICommandManager manager)

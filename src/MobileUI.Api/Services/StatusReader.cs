@@ -30,7 +30,11 @@ public class StatusReader : IStatusReader
             if (!File.Exists(_appStatusPath))
             {
                 _logger.LogWarning("app_status.json not found at {Path}", _appStatusPath);
-                return new DaemonStatus { DaemonRunning = false };
+                return new DaemonStatus
+                {
+                    DaemonRunning = false,
+                    Error = "Status file not found"
+                };
             }
 
             var json = File.ReadAllText(_appStatusPath);
@@ -42,12 +46,17 @@ public class StatusReader : IStatusReader
             {
                 _logger.LogError("Schema version mismatch: got {Got}, expected {Expected}",
                     schemaVersion, SchemaVersion);
-                throw new InvalidOperationException($"Schema version {schemaVersion} not supported");
+                return new DaemonStatus
+                {
+                    DaemonRunning = false,
+                    Error = $"Schema version {schemaVersion} not supported"
+                };
             }
 
             var heartbeatUtc = root.GetProperty("heartbeat_utc").GetString();
             var heartbeatOffset = DateTimeOffset.Parse(heartbeatUtc!);
-            var heartbeatAge = (int?)(DateTimeOffset.UtcNow - heartbeatOffset).TotalSeconds;
+            var heartbeatAgeTotalSeconds = (DateTimeOffset.UtcNow - heartbeatOffset).TotalSeconds;
+            var heartbeatAge = (int?)Math.Max(0, heartbeatAgeTotalSeconds);
 
             var status = new DaemonStatus
             {
@@ -107,7 +116,11 @@ public class StatusReader : IStatusReader
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error reading daemon status");
-            return new DaemonStatus { DaemonRunning = false };
+            return new DaemonStatus
+            {
+                DaemonRunning = false,
+                Error = $"Failed to read status: {ex.GetType().Name}"
+            };
         }
     }
 

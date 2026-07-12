@@ -1,16 +1,24 @@
+using Microsoft.Extensions.Options;
+
 namespace MobileUI.Api.Middleware;
+
+public class AuditOptions
+{
+    public string? LogFilePath { get; set; }
+}
 
 public class AuditLoggingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<AuditLoggingMiddleware> _logger;
-    private readonly string _auditLogPath;
+    private readonly string? _auditLogPath;
+    private readonly object _fileLock = new();
 
-    public AuditLoggingMiddleware(RequestDelegate next, ILogger<AuditLoggingMiddleware> logger, string auditLogPath = "")
+    public AuditLoggingMiddleware(RequestDelegate next, ILogger<AuditLoggingMiddleware> logger, IOptions<AuditOptions> options)
     {
         _next = next;
         _logger = logger;
-        _auditLogPath = auditLogPath;
+        _auditLogPath = options.Value.LogFilePath;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -42,7 +50,7 @@ public class AuditLoggingMiddleware
         }
     }
 
-    private static void LogToFile(string path, string message)
+    private void LogToFile(string path, string message)
     {
         try
         {
@@ -50,11 +58,14 @@ public class AuditLoggingMiddleware
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
 
-            File.AppendAllText(path, message + Environment.NewLine);
+            lock (_fileLock)
+            {
+                File.AppendAllText(path, message + Environment.NewLine);
+            }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to write audit log: {ex}");
+            _logger.LogError(ex, "Failed to write audit log to {Path}", path);
         }
     }
 }

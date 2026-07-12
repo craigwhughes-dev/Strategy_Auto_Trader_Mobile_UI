@@ -31,20 +31,30 @@ public class ApiKeyAuthenticationMiddlewareTests
     }
 
     [Test]
-    public async Task ProtectedEndpoint_WithoutApiKey_Returns401()
+    public async Task GetEndpoint_WithoutApiKey_Proceeds()
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/positions");
+        var response = await _client.SendAsync(request);
+
+        Assert.That(response.StatusCode, Is.Not.EqualTo(System.Net.HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task PostEndpoint_WithoutApiKey_Returns401()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/trades/sell");
         var response = await _client.SendAsync(request);
 
         Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Unauthorized));
     }
 
     [Test]
-    public async Task ProtectedEndpoint_WithValidApiKey_Proceeds()
+    public async Task PostEndpoint_WithValidApiKey_Proceeds()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/positions")
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/trades/sell")
         {
-            Headers = { { "X-Api-Key", _validApiKey } }
+            Headers = { { "X-Api-Key", _validApiKey } },
+            Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json")
         };
 
         var response = await _client.SendAsync(request);
@@ -53,11 +63,12 @@ public class ApiKeyAuthenticationMiddlewareTests
     }
 
     [Test]
-    public async Task ProtectedEndpoint_WithInvalidApiKey_Returns401()
+    public async Task PostEndpoint_WithInvalidApiKey_Returns401()
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/positions")
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/trades/sell")
         {
-            Headers = { { "X-Api-Key", "wrong-key" } }
+            Headers = { { "X-Api-Key", "wrong-key" } },
+            Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json")
         };
 
         var response = await _client.SendAsync(request);
@@ -91,7 +102,7 @@ internal class MockAuthHandler : HttpMessageHandler
 
         foreach (var header in request.Headers)
         {
-            context.Request.Headers.Add(header.Key, header.Value.ToArray());
+            context.Request.Headers[header.Key] = header.Value.ToArray();
         }
 
         await middleware.InvokeAsync(context);

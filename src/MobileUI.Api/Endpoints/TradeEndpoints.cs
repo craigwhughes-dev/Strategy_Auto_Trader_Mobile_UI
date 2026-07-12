@@ -34,11 +34,11 @@ public static class TradeEndpoints
 
     private static async Task<IResult> SellAsync(SellRequest request, ICommandManager commandManager)
     {
+        if (string.IsNullOrEmpty(request.Ticker))
+            return Results.BadRequest(new { error = "Ticker is required" });
+
         try
         {
-            if (string.IsNullOrEmpty(request.Ticker))
-                return Results.BadRequest(new { error = "Ticker is required" });
-
             var commandId = await commandManager.CreateSellCommandAsync(request.Ticker);
             var command = await commandManager.GetCommandAsync(commandId);
 
@@ -46,7 +46,6 @@ public static class TradeEndpoints
             {
                 Id = commandId,
                 Status = command?.Status ?? "pending",
-                IsQueued = false,
                 Message = $"Sell order queued for {request.Ticker}"
             });
         }
@@ -54,31 +53,19 @@ public static class TradeEndpoints
         {
             return Results.BadRequest(new { error = ex.Message });
         }
-        catch (Exception)
-        {
-            return Results.StatusCode(500);
-        }
     }
 
     private static async Task<IResult> SellAllAsync(ICommandManager commandManager)
     {
-        try
-        {
-            var commandId = await commandManager.CreateSellAllCommandAsync();
-            var command = await commandManager.GetCommandAsync(commandId);
+        var commandId = await commandManager.CreateSellAllCommandAsync();
+        var command = await commandManager.GetCommandAsync(commandId);
 
-            return Results.Accepted($"/api/trades/commands/{commandId}", new CommandResponse
-            {
-                Id = commandId,
-                Status = command?.Status ?? "pending",
-                IsQueued = false,
-                Message = "Sell all positions queued"
-            });
-        }
-        catch (Exception)
+        return Results.Accepted($"/api/trades/commands/{commandId}", new CommandResponse
         {
-            return Results.StatusCode(500);
-        }
+            Id = commandId,
+            Status = command?.Status ?? "pending",
+            Message = "Sell all positions queued"
+        });
     }
 
     private static async Task<IResult> GetPendingCommandsAsync(ICommandManager commandManager)

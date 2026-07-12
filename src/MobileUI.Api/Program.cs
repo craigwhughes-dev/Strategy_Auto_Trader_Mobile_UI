@@ -2,33 +2,35 @@ using System.Security.Cryptography.X509Certificates;
 using MobileUI.Api.Endpoints;
 using MobileUI.Api.Middleware;
 using MobileUI.Api.Services;
+using static MobileUI.Api.Middleware.AuditLoggingMiddleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<IStatusReader, StatusReader>();
-builder.Services.AddScoped<IJournalReader, JournalReader>();
-builder.Services.AddScoped<ICommandManager, CommandManager>();
-builder.Services.AddHttpClient<IPriceFetcher, PriceFetcher>();
-builder.Services.AddCors(options =>
+builder.Services.Configure<AuditOptions>(builder.Configuration.GetSection("Audit"));
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IStatusReader, StatusReader>();
+builder.Services.AddSingleton<IJournalReader, JournalReader>();
+builder.Services.AddSingleton<ICommandManager, CommandManager>();
+builder.Services.AddSingleton<IPriceFetcher>(sp =>
 {
-    options.AddPolicy("AllowLocalNetwork", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var logger = sp.GetRequiredService<ILogger<PriceFetcher>>();
+    var httpClient = httpClientFactory.CreateClient();
+    return new PriceFetcher(httpClient, logger);
 });
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     var isDevelopment = builder.Environment.IsDevelopment();
+    var certificateThumbprint = builder.Configuration["Security:CertificateThumbprint"]
+        ?? Environment.GetEnvironmentVariable("CERTIFICATE_THUMBPRINT")
+        ?? throw new InvalidOperationException("Certificate thumbprint not configured");
 
     if (isDevelopment)
     {
         serverOptions.ListenAnyIP(5000);
         serverOptions.ListenAnyIP(5001, listenOptions =>
         {
-            var certificateThumbprint = "7618F28C90EE396840E9B980773F8A69147E86CC";
             var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadOnly);
             var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
@@ -49,8 +51,6 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     {
         serverOptions.ListenAnyIP(5001, listenOptions =>
         {
-            var certificateThumbprint = Environment.GetEnvironmentVariable("CERTIFICATE_THUMBPRINT")
-                ?? "7618F28C90EE396840E9B980773F8A69147E86CC";
             var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadOnly);
             var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
@@ -68,16 +68,15 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 var app = builder.Build();
 
 app.UseMiddleware<AuditLoggingMiddleware>();
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
-}
-
-app.UseCors("AllowLocalNetwork");
+app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
 
 app.MapPositionsEndpoints();
-app.MapTradeEndpoints();
+
+var tradeCommandsEnabled = app.Configuration.GetValue<bool>("Features:TradeCommands");
+if (tradeCommandsEnabled)
+{
+    app.MapTradeEndpoints();
+}
 
 try
 {

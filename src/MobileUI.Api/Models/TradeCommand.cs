@@ -19,15 +19,9 @@ public class SellRequest
     public string Ticker { get; set; } = "";
 }
 
-public class SellAllRequest
-{
-}
-
 public class CommandResponse
 {
     public string Id { get; set; } = "";
     public string Status { get; set; } = "";
-    public DateTime? ExecuteAtUtc { get; set; }
-    public bool IsQueued { get; set; }
     public string Message { get; set; } = "";
 }

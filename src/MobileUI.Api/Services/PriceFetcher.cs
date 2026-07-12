@@ -11,26 +11,29 @@ public class PriceFetcher : IPriceFetcher
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<PriceFetcher> _logger;
-    private readonly Dictionary<string, (double Price, DateTime CachedAt)> _priceCache = new();
+    private readonly TimeProvider _timeProvider;
+    private readonly Dictionary<string, (double Price, long CachedAtTicks)> _priceCache = new();
     private readonly TimeSpan _cacheDuration = TimeSpan.FromSeconds(60);
 
-    public PriceFetcher(HttpClient httpClient, ILogger<PriceFetcher> logger)
+    public PriceFetcher(HttpClient httpClient, ILogger<PriceFetcher> logger, TimeProvider? timeProvider = null)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public async Task<Dictionary<string, double>> FetchPricesAsync(IEnumerable<string> tickers)
     {
         var prices = new Dictionary<string, double>();
         var tickersToFetch = new List<string>();
+        var nowTicks = _timeProvider.GetUtcNow().UtcTicks;
 
         foreach (var ticker in tickers)
         {
             var normalizedTicker = ticker.ToUpperInvariant();
             if (_priceCache.TryGetValue(normalizedTicker, out var cached))
             {
-                if (DateTime.UtcNow - cached.CachedAt < _cacheDuration)
+                if (nowTicks - cached.CachedAtTicks < _cacheDuration.Ticks)
                 {
                     prices[normalizedTicker] = cached.Price;
                     continue;
@@ -50,7 +53,7 @@ public class PriceFetcher : IPriceFetcher
                 if (price.HasValue)
                 {
                     prices[ticker] = price.Value;
-                    _priceCache[ticker] = (price.Value, DateTime.UtcNow);
+                    _priceCache[ticker] = (price.Value, nowTicks);
                 }
             }
         }
@@ -67,10 +70,13 @@ public class PriceFetcher : IPriceFetcher
         try
         {
             var yahooTicker = ticker.Contains('.') ? ticker : ticker;
-            var url = $"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{yahooTicker}?modules=price";
+            var url = $"https://query1.finance.yahoo.com/v8/finance/chart/{yahooTicker}";
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            var response = await _httpClient.GetAsync(url, cts.Token);
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+
+            var response = await _httpClient.SendAsync(request, cts.Token);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -82,28 +88,29 @@ public class PriceFetcher : IPriceFetcher
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            if (!root.TryGetProperty("quoteSummary", out var quoteSummary))
+            if (!root.TryGetProperty("chart", out var chart))
                 return null;
 
-            var results = quoteSummary.GetProperty("result");
+            var results = chart.GetProperty("result");
             if (results.GetArrayLength() == 0)
                 return null;
 
-            var priceObj = results[0].GetProperty("price");
-            var regularPrice = priceObj.GetProperty("regularMarketPrice").GetDouble();
+            var result = results[0];
+            if (!result.TryGetProperty("meta", out var meta))
+                return null;
 
-            var currency = "USD";
-            if (priceObj.TryGetProperty("currency", out var currencyProp))
+            if (!meta.TryGetProperty("regularMarketPrice", out var priceElement))
+                return null;
+
+            var price = priceElement.GetDouble();
+
+            if (meta.TryGetProperty("currency", out var currencyProp))
             {
-                currency = currencyProp.GetString() ?? "USD";
+                var currency = currencyProp.GetString() ?? "USD";
+                _logger.LogDebug("Fetched price for {Ticker}: {Price} {Currency}", ticker, price, currency);
             }
 
-            if (currency == "GBp")
-            {
-                regularPrice /= 100.0;
-            }
-
-            return regularPrice;
+            return price;
         }
         catch (Exception ex)
         {

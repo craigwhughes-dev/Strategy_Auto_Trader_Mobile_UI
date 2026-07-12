@@ -15,7 +15,6 @@ public class PositionsViewModel : BindableObject
     private bool _dryRun;
     private bool _haltNewEntries;
     private int? _heartbeatAgeSeconds;
-    private List<TradeRecord> _recentTrades = new();
 
     public bool IsLoading
     {
@@ -58,10 +57,6 @@ public class PositionsViewModel : BindableObject
 
     public ICommand RefreshCommand { get; }
 
-    public PositionsViewModel() : this(new ApiClient())
-    {
-    }
-
     public PositionsViewModel(IApiClient apiClient)
     {
         _apiClient = apiClient;
@@ -71,17 +66,20 @@ public class PositionsViewModel : BindableObject
     public async Task RefreshAsync()
     {
         IsLoading = true;
+        StatusMessage = "Loading...";
         try
         {
-            await Task.WhenAll(
-                LoadPositionsAsync(),
-                LoadHealthAsync()
-            );
+            var posTask = LoadPositionsAsync();
+            var healthTask = LoadHealthAsync();
+            var tradesTask = LoadRecentTradesAsync();
+
+            await Task.WhenAll(posTask, healthTask, tradesTask);
             StatusMessage = "Updated";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
+            System.Diagnostics.Debug.WriteLine($"Refresh error: {ex}");
+            StatusMessage = $"Error: Cannot reach server";
         }
         finally
         {
@@ -106,6 +104,7 @@ public class PositionsViewModel : BindableObject
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error loading positions: {ex}");
+            throw;
         }
     }
 
@@ -120,10 +119,24 @@ public class PositionsViewModel : BindableObject
                 DryRun = health.DryRun;
                 HaltNewEntries = health.HaltNewEntries;
                 HeartbeatAgeSeconds = health.HeartbeatAgeSeconds;
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading health: {ex}");
+            throw;
+        }
+    }
 
-                var recentTrades = _recentTrades;
+    private async Task LoadRecentTradesAsync()
+    {
+        try
+        {
+            var trades = await _apiClient.GetRecentTradesAsync(count: 5);
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
                 RecentTrades.Clear();
-                foreach (var trade in recentTrades.Take(5))
+                foreach (var trade in trades)
                 {
                     RecentTrades.Add(trade);
                 }
@@ -131,7 +144,8 @@ public class PositionsViewModel : BindableObject
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading health: {ex}");
+            System.Diagnostics.Debug.WriteLine($"Error loading recent trades: {ex}");
+            throw;
         }
     }
 }

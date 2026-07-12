@@ -10,6 +10,7 @@ public class DaemonStatus
     public string? LastReconcileDate { get; set; }
     public TradesDaily? TradesDaily { get; set; }
     public Dictionary<string, MarketStatus> Markets { get; set; } = new();
+    public string? Error { get; set; }
 }
 
 public class TradesDaily

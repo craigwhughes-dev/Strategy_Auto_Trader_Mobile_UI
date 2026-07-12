@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace MobileUI.Api.Middleware;
 
 public class ApiKeyAuthenticationMiddleware
@@ -17,7 +19,8 @@ public class ApiKeyAuthenticationMiddleware
         var request = context.Request;
         var sourceIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-        if (request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+        if (request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase) &&
+            request.Method != HttpMethods.Get && request.Method != HttpMethods.Head)
         {
             if (!request.Headers.TryGetValue(ApiKeyHeaderName, out var apiKeyValue))
             {
@@ -38,7 +41,9 @@ public class ApiKeyAuthenticationMiddleware
                 return;
             }
 
-            if (!providedKey.Equals(expectedKey))
+            if (!CryptographicOperations.FixedTimeEquals(
+                System.Text.Encoding.UTF8.GetBytes(providedKey),
+                System.Text.Encoding.UTF8.GetBytes(expectedKey)))
             {
                 _logger.LogWarning("Invalid API key from {SourceIp} for {Method} {Path}", sourceIp, request.Method, request.Path);
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;

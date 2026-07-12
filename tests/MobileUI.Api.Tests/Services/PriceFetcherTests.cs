@@ -34,10 +34,10 @@ public class PriceFetcherTests
     {
         var yahooResponse = """
 {
-  "quoteSummary": {
+  "chart": {
     "result": [
       {
-        "price": {
+        "meta": {
           "regularMarketPrice": 150.25,
           "currency": "USD"
         }
@@ -56,14 +56,14 @@ public class PriceFetcherTests
     }
 
     [Test]
-    public async Task FetchPricesAsync_WithGBpCurrency_ConvertsToGbp()
+    public async Task FetchPricesAsync_WithGBpCurrency_ReturnsPencePrice()
     {
         var yahooResponse = """
 {
-  "quoteSummary": {
+  "chart": {
     "result": [
       {
-        "price": {
+        "meta": {
           "regularMarketPrice": 10050.0,
           "currency": "GBp"
         }
@@ -77,7 +77,7 @@ public class PriceFetcherTests
 
         var prices = await _fetcher.FetchPricesAsync(new[] { "GSK.L" });
 
-        Assert.That(prices["GSK.L"], Is.EqualTo(100.50).Within(0.01));
+        Assert.That(prices["GSK.L"], Is.EqualTo(10050.0).Within(0.01), "GBX prices should be in pence, not converted to GBP");
     }
 
     [Test]
@@ -85,10 +85,10 @@ public class PriceFetcherTests
     {
         var yahooResponse = """
 {
-  "quoteSummary": {
+  "chart": {
     "result": [
       {
-        "price": {
+        "meta": {
           "regularMarketPrice": 150.25,
           "currency": "USD"
         }
@@ -114,10 +114,10 @@ public class PriceFetcherTests
     {
         var yahooResponse = """
 {
-  "quoteSummary": {
+  "chart": {
     "result": [
       {
-        "price": {
+        "meta": {
           "regularMarketPrice": 150.25,
           "currency": "USD"
         }
@@ -129,12 +129,15 @@ public class PriceFetcherTests
 
         _mockHandler.SetResponse(HttpStatusCode.OK, yahooResponse);
 
-        await _fetcher.FetchPricesAsync(new[] { "AAPL" });
+        var timeProvider = new FakeTimeProvider();
+        var fetcher = new PriceFetcher(_httpClient, _logger, timeProvider);
+
+        await fetcher.FetchPricesAsync(new[] { "AAPL" });
         var requestCount1 = _mockHandler.RequestCount;
 
-        await Task.Delay(TimeSpan.FromSeconds(61));
+        timeProvider.Advance(TimeSpan.FromSeconds(61));
 
-        await _fetcher.FetchPricesAsync(new[] { "AAPL" });
+        await fetcher.FetchPricesAsync(new[] { "AAPL" });
         var requestCount2 = _mockHandler.RequestCount;
 
         Assert.That(requestCount2, Is.GreaterThan(requestCount1), "Expired cache should trigger new request");
@@ -165,10 +168,10 @@ public class PriceFetcherTests
     {
         var yahooResponse = """
 {
-  "quoteSummary": {
+  "chart": {
     "result": [
       {
-        "price": {
+        "meta": {
           "regularMarketPrice": 150.25,
           "currency": "USD"
         }
@@ -190,10 +193,10 @@ public class PriceFetcherTests
     {
         var yahooResponse = """
 {
-  "quoteSummary": {
+  "chart": {
     "result": [
       {
-        "price": {
+        "meta": {
           "regularMarketPrice": 150.25,
           "currency": "USD"
         }
@@ -216,10 +219,10 @@ public class PriceFetcherTests
     {
         var yahooResponse = """
 {
-  "quoteSummary": {
+  "chart": {
     "result": [
       {
-        "price": {
+        "meta": {
           "regularMarketPrice": 150.25,
           "currency": "USD"
         }
@@ -258,4 +261,13 @@ internal class MockHttpMessageHandler : HttpMessageHandler
         };
         return await Task.FromResult(response);
     }
+}
+
+internal class FakeTimeProvider : TimeProvider
+{
+    private DateTimeOffset _utcNow = DateTimeOffset.UtcNow;
+
+    public override DateTimeOffset GetUtcNow() => _utcNow;
+
+    public void Advance(TimeSpan duration) => _utcNow = _utcNow.Add(duration);
 }
