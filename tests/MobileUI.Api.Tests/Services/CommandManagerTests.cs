@@ -139,7 +139,8 @@ public class CommandManagerTests
 
         Assert.That(result, Is.True);
         var command = await _manager.GetCommandAsync(commandId);
-        Assert.That(command, Is.Null);
+        Assert.That(command, Is.Not.Null);
+        Assert.That(command!.Status, Is.EqualTo("cancelled"));
     }
 
     [Test]
@@ -147,6 +148,59 @@ public class CommandManagerTests
     {
         var result = await _manager.CancelCommandAsync("nonexistent-id");
         Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task CancelCommandAsync_WithQueuedForOpenCommand_Succeeds()
+    {
+        var commandId = await _manager.CreateSellAllCommandAsync();
+        var pendingFile = Path.Combine(_commandsPath, "pending", $"{commandId}.json");
+
+        // Manually update status to queued_for_open
+        var json = await File.ReadAllTextAsync(pendingFile);
+        var cmd = System.Text.Json.JsonSerializer.Deserialize<MobileUI.Api.Models.TradeCommand>(json);
+        cmd!.Status = "queued_for_open";
+        var updatedJson = System.Text.Json.JsonSerializer.Serialize(cmd, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(pendingFile, updatedJson);
+
+        var result = await _manager.CancelCommandAsync(commandId);
+
+        Assert.That(result, Is.True);
+        var doneFile = Path.Combine(_commandsPath, "done", $"{commandId}.cancelled.json");
+        Assert.That(File.Exists(doneFile), Is.True);
+    }
+
+    [Test]
+    public async Task CancelCommandAsync_WritesResultsFileWithCancelledStatus()
+    {
+        var commandId = await _manager.CreateSellAllCommandAsync();
+
+        var result = await _manager.CancelCommandAsync(commandId);
+
+        Assert.That(result, Is.True);
+        var resultsFile = Path.Combine(_commandsPath, "results", $"{commandId}.json");
+        Assert.That(File.Exists(resultsFile), Is.True);
+
+        var resultJson = await File.ReadAllTextAsync(resultsFile);
+        var resultCmd = System.Text.Json.JsonSerializer.Deserialize<MobileUI.Api.Models.TradeCommand>(resultJson);
+        Assert.That(resultCmd!.Status, Is.EqualTo("cancelled"));
+    }
+
+    [Test]
+    public async Task CreateSellCommandAsync_RejectsWhenQueuedForOpenExists()
+    {
+        var commandId = await _manager.CreateSellCommandAsync("AAPL");
+        var pendingFile = Path.Combine(_commandsPath, "pending", $"{commandId}.json");
+
+        // Manually update status to queued_for_open
+        var json = await File.ReadAllTextAsync(pendingFile);
+        var cmd = System.Text.Json.JsonSerializer.Deserialize<MobileUI.Api.Models.TradeCommand>(json);
+        cmd!.Status = "queued_for_open";
+        var updatedJson = System.Text.Json.JsonSerializer.Serialize(cmd, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(pendingFile, updatedJson);
+
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _manager.CreateSellCommandAsync("AAPL"));
     }
 
     [Test]

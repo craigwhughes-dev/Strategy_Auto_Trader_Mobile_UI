@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using MobileUI.Maui.Models;
 
 namespace MobileUI.Maui.Services;
@@ -9,6 +10,11 @@ public interface IApiClient
     Task<List<Position>> GetPositionsAsync();
     Task<List<TradeRecord>> GetRecentTradesAsync(int count = 20);
     Task<DaemonStatus> GetHealthAsync();
+    Task<CommandResponse> SellAsync(string ticker);
+    Task<CommandResponse> SellAllAsync();
+    Task<List<TradeCommand>> GetCommandsAsync();
+    Task<TradeCommand?> GetCommandAsync(string id);
+    Task<string?> CancelCommandAsync(string id);
     void SetBaseUrl(string url);
     void SetCertificateThumbprint(string thumbprint);
     Task SetApiKeyAsync(string apiKey);
@@ -119,5 +125,57 @@ public class ApiClient : IApiClient
     {
         var status = await _httpClient.GetFromJsonAsync<DaemonStatus>($"{_baseUrl}/api/health");
         return status ?? new DaemonStatus { DaemonRunning = false };
+    }
+
+    public async Task<CommandResponse> SellAsync(string ticker)
+    {
+        var request = new { ticker };
+        var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/api/trades/sell", request);
+        if (!response.IsSuccessStatusCode)
+            return new CommandResponse { Status = "error", Message = $"HTTP {(int)response.StatusCode}" };
+        var result = await response.Content.ReadFromJsonAsync<CommandResponse>();
+        return result ?? new CommandResponse { Status = "error", Message = "Failed to parse response" };
+    }
+
+    public async Task<CommandResponse> SellAllAsync()
+    {
+        var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
+        var response = await _httpClient.PostAsync($"{_baseUrl}/api/trades/sell-all", content);
+        if (!response.IsSuccessStatusCode)
+            return new CommandResponse { Status = "error", Message = $"HTTP {(int)response.StatusCode}" };
+        var result = await response.Content.ReadFromJsonAsync<CommandResponse>();
+        return result ?? new CommandResponse { Status = "error", Message = "Failed to parse response" };
+    }
+
+    public async Task<List<TradeCommand>> GetCommandsAsync()
+    {
+        var commands = await _httpClient.GetFromJsonAsync<List<TradeCommand>>($"{_baseUrl}/api/trades/commands");
+        return commands ?? new List<TradeCommand>();
+    }
+
+    public async Task<TradeCommand?> GetCommandAsync(string id)
+    {
+        return await _httpClient.GetFromJsonAsync<TradeCommand>($"{_baseUrl}/api/trades/commands/{id}");
+    }
+
+    public async Task<string?> CancelCommandAsync(string id)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"{_baseUrl}/api/trades/commands/{id}");
+            if (response.IsSuccessStatusCode)
+                return null;
+
+            return response.StatusCode switch
+            {
+                System.Net.HttpStatusCode.Conflict => "Command is already executing",
+                System.Net.HttpStatusCode.NotFound => "Command not found",
+                _ => $"HTTP {(int)response.StatusCode}"
+            };
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
     }
 }

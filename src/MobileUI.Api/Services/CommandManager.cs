@@ -43,7 +43,7 @@ public class CommandManager : ICommandManager
             throw new InvalidOperationException($"Position {ticker} not found");
 
         var existingCommands = await GetPendingCommandsAsync();
-        if (existingCommands.Any(c => c.Action == "SELL" && c.Ticker == normalizedTicker && c.Status == "pending"))
+        if (existingCommands.Any(c => c.Action == "SELL" && c.Ticker == normalizedTicker && (c.Status == "pending" || c.Status == "queued_for_open")))
             throw new InvalidOperationException($"A pending SELL command for {ticker} already exists");
 
         var command = new TradeCommand
@@ -133,23 +133,39 @@ public class CommandManager : ICommandManager
     public async Task<bool> CancelCommandAsync(string id)
     {
         var pendingPath = Path.Combine(_commandsPath, "pending", $"{id}.json");
-
-        if (!File.Exists(pendingPath))
-        {
-            _logger.LogWarning("Cannot cancel command {CommandId}: not in pending state", id);
-            return false;
-        }
+        var donePath = Path.Combine(_commandsPath, "done", $"{id}.cancelled.json");
 
         try
         {
-            File.Delete(pendingPath);
-            _logger.LogInformation("Cancelled command {CommandId}", id);
-            return true;
+            File.Move(pendingPath, donePath, overwrite: true);
         }
         catch (FileNotFoundException)
         {
             _logger.LogWarning("Command {CommandId} moved by daemon during cancel attempt", id);
             return false;
         }
+
+        try
+        {
+            var json = await File.ReadAllTextAsync(donePath);
+            var command = JsonSerializer.Deserialize<TradeCommand>(json);
+            if (command != null)
+            {
+                command.Status = "cancelled";
+                var resultJson = JsonSerializer.Serialize(command, new JsonSerializerOptions { WriteIndented = true });
+                var resultsPath = Path.Combine(_commandsPath, "results", $"{id}.json");
+                var tempPath = resultsPath + ".tmp";
+
+                await File.WriteAllTextAsync(tempPath, resultJson);
+                File.Move(tempPath, resultsPath, overwrite: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to write results file for cancelled command {CommandId}", id);
+        }
+
+        _logger.LogInformation("Cancelled command {CommandId}", id);
+        return true;
     }
 }

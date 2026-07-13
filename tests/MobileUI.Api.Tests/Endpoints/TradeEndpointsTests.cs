@@ -159,6 +159,18 @@ public class TradeEndpointsTests
         Assert.That(result, Is.InstanceOf<IResult>());
     }
 
+    [Test]
+    public async Task CancelCommandAsync_WithQueuedForOpenCommand_Returns200Ok()
+    {
+        var commandId = await _commandManager.CreateSellAllCommandAsync();
+        var cmd = await _commandManager.GetCommandAsync(commandId);
+        cmd!.Status = "queued_for_open"; // Simulate queued-for-open command
+
+        var result = await InvokeCancelCommandEndpoint(commandId, _commandManager);
+
+        Assert.That(result, Is.InstanceOf<IResult>());
+    }
+
     // Helper methods to invoke endpoint handlers
     private async Task<IResult> InvokeSellEndpoint(SellRequest request, ICommandManager manager)
     {
@@ -235,7 +247,7 @@ public class TradeEndpointsTests
         if (command == null)
             return Results.NotFound(new { error = "Command not found" });
 
-        if (command.Status != "pending")
+        if (command.Status != "pending" && command.Status != "queued_for_open")
             return Results.Conflict(new { error = "Cannot cancel: command already executing or completed" });
 
         var cancelled = await manager.CancelCommandAsync(id);

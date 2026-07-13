@@ -15,6 +15,8 @@ public class PositionsViewModel : BindableObject
     private bool _dryRun;
     private bool _haltNewEntries;
     private int? _heartbeatAgeSeconds;
+    private bool _isSellInFlight;
+    private DaemonStatus? _lastHealth;
 
     public bool IsLoading
     {
@@ -52,8 +54,15 @@ public class PositionsViewModel : BindableObject
         set { _heartbeatAgeSeconds = value; OnPropertyChanged(); }
     }
 
+    public bool IsSellInFlight
+    {
+        get => _isSellInFlight;
+        set { _isSellInFlight = value; OnPropertyChanged(); }
+    }
+
     public ObservableCollection<Position> Positions { get; } = new();
     public ObservableCollection<TradeRecord> RecentTrades { get; } = new();
+    public ObservableCollection<TradeCommand> PendingCommands { get; } = new();
 
     public ICommand RefreshCommand { get; }
 
@@ -72,8 +81,9 @@ public class PositionsViewModel : BindableObject
             var posTask = LoadPositionsAsync();
             var healthTask = LoadHealthAsync();
             var tradesTask = LoadRecentTradesAsync();
+            var commandsTask = LoadPendingCommandsAsync();
 
-            await Task.WhenAll(posTask, healthTask, tradesTask);
+            await Task.WhenAll(posTask, healthTask, tradesTask, commandsTask);
             StatusMessage = "Updated";
         }
         catch (Exception ex)
@@ -113,6 +123,7 @@ public class PositionsViewModel : BindableObject
         try
         {
             var health = await _apiClient.GetHealthAsync();
+            _lastHealth = health;
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 DaemonRunning = health.DaemonRunning;
@@ -147,5 +158,154 @@ public class PositionsViewModel : BindableObject
             System.Diagnostics.Debug.WriteLine($"Error loading recent trades: {ex}");
             throw;
         }
+    }
+
+    private async Task LoadPendingCommandsAsync()
+    {
+        try
+        {
+            var commands = await _apiClient.GetCommandsAsync();
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                PendingCommands.Clear();
+                foreach (var cmd in commands)
+                {
+                    PendingCommands.Add(cmd);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading pending commands: {ex}");
+        }
+    }
+
+    public async Task<CommandResponse> SubmitSellAsync(string ticker)
+    {
+        IsSellInFlight = true;
+        try
+        {
+            var response = await _apiClient.SellAsync(ticker);
+            if (response.Status == "error" || string.IsNullOrEmpty(response.Id))
+                return response;
+
+            var finalCommand = await PollCommandStatusAsync(response.Id);
+
+            if (finalCommand != null)
+            {
+                return new CommandResponse
+                {
+                    Id = finalCommand.Id,
+                    Status = finalCommand.Status,
+                    Message = finalCommand.Status switch
+                    {
+                        "filled" => $"Filled at {finalCommand.FillPrice:F2}",
+                        "error" => finalCommand.ErrorMessage ?? "Unknown error",
+                        _ => response.Message
+                    }
+                };
+            }
+
+            return response;
+        }
+        finally
+        {
+            IsSellInFlight = false;
+        }
+    }
+
+    public async Task<CommandResponse> SubmitSellAllAsync()
+    {
+        IsSellInFlight = true;
+        try
+        {
+            var response = await _apiClient.SellAllAsync();
+            if (response.Status == "error" || string.IsNullOrEmpty(response.Id))
+                return response;
+
+            var finalCommand = await PollCommandStatusAsync(response.Id);
+
+            if (finalCommand != null)
+            {
+                return new CommandResponse
+                {
+                    Id = finalCommand.Id,
+                    Status = finalCommand.Status,
+                    Message = finalCommand.Status switch
+                    {
+                        "filled" => "Filled",
+                        "error" => finalCommand.ErrorMessage ?? "Unknown error",
+                        _ => response.Message
+                    }
+                };
+            }
+
+            return response;
+        }
+        finally
+        {
+            IsSellInFlight = false;
+        }
+    }
+
+    private async Task<TradeCommand?> PollCommandStatusAsync(string commandId)
+    {
+        var startTime = DateTime.UtcNow;
+        var pollInterval = TimeSpan.FromSeconds(3);
+        var timeout = TimeSpan.FromSeconds(60);
+        TradeCommand? lastCommand = null;
+
+        while (DateTime.UtcNow - startTime < timeout)
+        {
+            try
+            {
+                var command = await _apiClient.GetCommandAsync(commandId);
+                if (command == null)
+                    break;
+
+                lastCommand = command;
+
+                if (command.Status == "filled" || command.Status == "error" ||
+                    command.Status == "expired" || command.Status == "cancelled")
+                {
+                    await LoadPendingCommandsAsync();
+                    await LoadPositionsAsync();
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error polling command status: {ex}");
+            }
+
+            await Task.Delay(pollInterval);
+        }
+
+        await LoadPendingCommandsAsync();
+        return lastCommand;
+    }
+
+    public async Task<string?> CancelPendingAsync(string id)
+    {
+        try
+        {
+            var result = await _apiClient.CancelCommandAsync(id);
+            await LoadPendingCommandsAsync();
+            return result;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error cancelling command: {ex}");
+            return ex.Message;
+        }
+    }
+
+    public MarketStatus? GetMarketStatus(string market)
+    {
+        if (_lastHealth?.Markets == null)
+            return null;
+
+        _lastHealth.Markets.TryGetValue(market, out var status);
+        return status;
     }
 }

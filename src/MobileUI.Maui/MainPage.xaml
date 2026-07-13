@@ -45,8 +45,19 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Positions section -->
-                <Label Text="OPEN POSITIONS" Style="{StaticResource SectionHeader}"/>
+                <!-- Positions section with Sell All button -->
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <Label Text="OPEN POSITIONS" Style="{StaticResource SectionHeader}" VerticalOptions="Center"/>
+                    <Button Grid.Column="1"
+                            Text="Sell All"
+                            Style="{StaticResource SecondaryButton}"
+                            Clicked="OnSellAllClicked"
+                            IsEnabled="{Binding IsSellInFlight, Converter={StaticResource InverseBoolConverter}}"
+                            Padding="12,6"
+                            FontSize="13"
+                            HeightRequest="36"
+                            CornerRadius="8"/>
+                </Grid>
 
                 <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Positions}">
                     <BindableLayout.EmptyView>
@@ -59,7 +70,7 @@
                     <BindableLayout.ItemTemplate>
                         <DataTemplate>
                             <Border Style="{StaticResource Card}">
-                                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="12">
+                                <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="12">
                                     <HorizontalStackLayout Spacing="8">
                                         <Label Text="{Binding Ticker}" Style="{StaticResource TickerLabel}" VerticalOptions="Center"/>
                                         <Border Style="{StaticResource Pill}"
@@ -88,6 +99,52 @@
                                             <Label Text="{Binding CurrentPrice, StringFormat='{0:F2}'}" Style="{StaticResource ValueLabel}"/>
                                         </VerticalStackLayout>
                                     </Grid>
+
+                                    <Button Grid.Row="2" Grid.ColumnSpan="2"
+                                            Text="Sell Position"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Clicked="OnSellPositionClicked"
+                                            CommandParameter="{Binding Ticker}"
+                                            IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IsSellInFlight, Converter={StaticResource InverseBoolConverter}}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <!-- Pending commands section -->
+                <Label Text="PENDING COMMANDS" Style="{StaticResource SectionHeader}"
+                       IsVisible="{Binding PendingCommands.Count, Converter={StaticResource IntToBoolConverter}}"/>
+
+                <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding PendingCommands}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}">
+                                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="10">
+                                    <VerticalStackLayout Spacing="4">
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Label Text="{Binding Action, StringFormat='{0}'}" FontSize="15" FontAttributes="Bold"
+                                                   TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"/>
+                                            <Label Text="{Binding Ticker, StringFormat='{0}'}" FontSize="15" FontAttributes="Bold"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource AccentDark}}"/>
+                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding Status, StringFormat='Status: {0}'}"
+                                               Style="{StaticResource CaptionLabel}"/>
+                                        <Label Text="{Binding RequestedAtUtc, StringFormat='Requested: {0:MMM d, HH:mm}'}"
+                                               Style="{StaticResource CaptionLabel}"/>
+                                    </VerticalStackLayout>
+
+                                    <Button Grid.Column="1" Grid.RowSpan="2"
+                                            Text="Cancel"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Clicked="OnCancelCommandClicked"
+                                            CommandParameter="{Binding Id}"
+                                            Padding="12,6"
+                                            FontSize="13"
+                                            HeightRequest="44"
+                                            WidthRequest="80"
+                                            IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IsSellInFlight, Converter={StaticResource InverseBoolConverter}}"
+                                            VerticalOptions="Center"/>
                                 </Grid>
                             </Border>
                         </DataTemplate>

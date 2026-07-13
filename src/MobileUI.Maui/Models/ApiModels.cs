@@ -53,3 +53,23 @@ public class MarketStatus
     public bool InTradingHours { get; set; }
     public int LastCycleHour { get; set; }
 }
+
+public class TradeCommand
+{
+    public string Id { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
+    public string? Ticker { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime RequestedAtUtc { get; set; }
+    public DateTime ExpiresAtUtc { get; set; }
+    public double? FillPrice { get; set; }
+    public int? Quantity { get; set; }
+    public string? ErrorMessage { get; set; }
+}
+
+public class CommandResponse
+{
+    public string Id { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+}

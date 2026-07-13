@@ -107,7 +107,7 @@ public static class TradeEndpoints
         if (command == null)
             return Results.NotFound(new { error = "Command not found" });
 
-        if (command.Status != "pending")
+        if (command.Status != "pending" && command.Status != "queued_for_open")
             return Results.Conflict(new { error = "Cannot cancel: command already executing or completed" });
 
         var cancelled = await commandManager.CancelCommandAsync(id);
