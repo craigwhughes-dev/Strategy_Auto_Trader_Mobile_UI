@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using System.Linq;
 using MobileUI.Api.Endpoints;
 using MobileUI.Api.Middleware;
 using MobileUI.Api.Services;
@@ -19,6 +20,33 @@ builder.Services.AddSingleton<IPriceFetcher>(sp =>
     return new PriceFetcher(httpClient, logger);
 });
 
+static void ConfigureHttps(Microsoft.AspNetCore.Server.Kestrel.Core.ListenOptions listenOptions, string thumbprint)
+{
+    foreach (var location in new[] { StoreLocation.CurrentUser, StoreLocation.LocalMachine })
+    {
+        var store = new X509Store(StoreName.My, location);
+        store.Open(OpenFlags.ReadOnly);
+        var certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+        if (certs.Count > 0)
+        {
+            listenOptions.UseHttps(certs[0]);
+            store.Close();
+            return;
+        }
+        store.Close();
+    }
+
+    Console.WriteLine("Warning: Certificate not found in CurrentUser or LocalMachine store. HTTPS disabled.");
+}
+
+static bool IsLocalInterfaceAddress(string ip)
+{
+    var target = System.Net.IPAddress.Parse(ip);
+    return System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+        .SelectMany(nic => nic.GetIPProperties().UnicastAddresses)
+        .Any(addr => addr.Address.Equals(target));
+}
+
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     var isDevelopment = builder.Environment.IsDevelopment();
@@ -32,80 +60,31 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     if (isDevelopment)
     {
         serverOptions.ListenAnyIP(5000);
-        serverOptions.ListenAnyIP(5001, listenOptions =>
-        {
-            var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-            store.Open(OpenFlags.ReadOnly);
-            var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
-
-            if (certs.Count > 0)
-            {
-                listenOptions.UseHttps(certs[0]);
-            }
-            else
-            {
-                Console.WriteLine("Warning: Certificate not found. HTTPS disabled.");
-            }
-
-            store.Close();
-        });
+        serverOptions.ListenAnyIP(5001, listenOptions => ConfigureHttps(listenOptions, certificateThumbprint));
     }
     else
     {
-        if (!string.IsNullOrEmpty(tailscaleIp))
+        // Kestrel's Listen() only registers configuration here; the actual socket bind happens later
+        // inside app.Run(), so a try/catch around Listen() can never observe a bad-address failure.
+        // Check the address is actually assigned to a local interface before registering it.
+        if (!string.IsNullOrEmpty(tailscaleIp) && IsLocalInterfaceAddress(tailscaleIp))
         {
             Console.WriteLine($"Binding to Tailscale interface: {tailscaleIp}");
-            try
-            {
-                serverOptions.Listen(System.Net.IPAddress.Parse(tailscaleIp), 5001, listenOptions =>
-                {
-                    var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                    store.Open(OpenFlags.ReadOnly);
-                    var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
-
-                    if (certs.Count > 0)
-                    {
-                        listenOptions.UseHttps(certs[0]);
-                    }
-
-                    store.Close();
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Failed to bind to Tailscale IP {tailscaleIp}: {ex.Message}");
-                Console.WriteLine("Falling back to 0.0.0.0");
-                serverOptions.ListenAnyIP(5001, listenOptions =>
-                {
-                    var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                    store.Open(OpenFlags.ReadOnly);
-                    var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
-
-                    if (certs.Count > 0)
-                    {
-                        listenOptions.UseHttps(certs[0]);
-                    }
-
-                    store.Close();
-                });
-            }
+            serverOptions.Listen(System.Net.IPAddress.Parse(tailscaleIp), 5001,
+                listenOptions => ConfigureHttps(listenOptions, certificateThumbprint));
         }
         else
         {
-            Console.WriteLine("No Tailscale IP configured. Binding to 0.0.0.0");
-            serverOptions.ListenAnyIP(5001, listenOptions =>
+            if (!string.IsNullOrEmpty(tailscaleIp))
             {
-                var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                store.Open(OpenFlags.ReadOnly);
-                var certs = store.Certificates.Find(X509FindType.FindByThumbprint, certificateThumbprint, false);
+                Console.WriteLine($"Configured Tailscale IP {tailscaleIp} is not assigned to any local interface. Binding to 0.0.0.0 instead.");
+            }
+            else
+            {
+                Console.WriteLine("No Tailscale IP configured. Binding to 0.0.0.0");
+            }
 
-                if (certs.Count > 0)
-                {
-                    listenOptions.UseHttps(certs[0]);
-                }
-
-                store.Close();
-            });
+            serverOptions.ListenAnyIP(5001, listenOptions => ConfigureHttps(listenOptions, certificateThumbprint));
         }
     }
 });
