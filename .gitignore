@@ -56,6 +56,10 @@ cert.pfx
 # macOS
 .DS_Store
 
+# Runtime logs
+*.log
+*.err
+
 # Node (if used)
 node_modules/
 npm-debug.log

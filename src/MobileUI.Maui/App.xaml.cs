@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace MobileUI.Maui;
+namespace StrategyTradingAppUI.Maui;
 
 public partial class App : Application
 {

@@ -1,26 +1,9 @@
 using System.Net.Http.Json;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
-using MobileUI.Maui.Models;
+using StrategyTradingAppUI.Maui.Models;
 
-namespace MobileUI.Maui.Services;
-
-public interface IApiClient
-{
-    Task<List<Position>> GetPositionsAsync();
-    Task<List<TradeRecord>> GetRecentTradesAsync(int count = 20);
-    Task<DaemonStatus> GetHealthAsync();
-    Task<CommandResponse> SellAsync(string ticker);
-    Task<CommandResponse> SellAllAsync();
-    Task<List<TradeCommand>> GetCommandsAsync();
-    Task<TradeCommand?> GetCommandAsync(string id);
-    Task<string?> CancelCommandAsync(string id);
-    void SetBaseUrl(string url);
-    void SetCertificateThumbprint(string thumbprint);
-    Task SetApiKeyAsync(string apiKey);
-    Task<string> GetApiKeyAsync();
-    string GetBaseUrl();
-}
+namespace StrategyTradingAppUI.Maui.Services;
 
 public class ApiClient : IApiClient
 {
@@ -31,8 +14,8 @@ public class ApiClient : IApiClient
     private const string BaseUrlPrefsKey = "api_base_url";
     private const string ThumbprintPrefsKey = "api_cert_thumbprint";
     private const string ApiKeyPrefsKey = "api_key";
-    private const string DefaultBaseUrl = "http://192.168.1.100:5000";
-    private const string DefaultThumbprint = "7618F28C90EE396840E9B980773F8A69147E86CC";
+    private const string DefaultBaseUrl = "http://localhost:5000";
+    private const string DefaultThumbprint = "";
 
     public ApiClient()
     {
@@ -141,6 +124,26 @@ public class ApiClient : IApiClient
     {
         var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
         var response = await _httpClient.PostAsync($"{_baseUrl}/api/trades/sell-all", content);
+        if (!response.IsSuccessStatusCode)
+            return new CommandResponse { Status = "error", Message = $"HTTP {(int)response.StatusCode}" };
+        var result = await response.Content.ReadFromJsonAsync<CommandResponse>();
+        return result ?? new CommandResponse { Status = "error", Message = "Failed to parse response" };
+    }
+
+    public async Task<CommandResponse> PauseBuyingAsync()
+    {
+        var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
+        var response = await _httpClient.PostAsync($"{_baseUrl}/api/trades/pause-buying", content);
+        if (!response.IsSuccessStatusCode)
+            return new CommandResponse { Status = "error", Message = $"HTTP {(int)response.StatusCode}" };
+        var result = await response.Content.ReadFromJsonAsync<CommandResponse>();
+        return result ?? new CommandResponse { Status = "error", Message = "Failed to parse response" };
+    }
+
+    public async Task<CommandResponse> ResumeBuyingAsync()
+    {
+        var content = new StringContent("", System.Text.Encoding.UTF8, "application/json");
+        var response = await _httpClient.PostAsync($"{_baseUrl}/api/trades/resume-buying", content);
         if (!response.IsSuccessStatusCode)
             return new CommandResponse { Status = "error", Message = $"HTTP {(int)response.StatusCode}" };
         var result = await response.Content.ReadFromJsonAsync<CommandResponse>();

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="MobileUI.Maui.MainPage"
-             Title="Trading Status"
+             x:Class="StrategyTradingAppUI.Maui.MainPage"
+             Title="Strategy-Auto-Trader - Trading Status"
              BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <RefreshView Command="{Binding RefreshCommand}"
@@ -41,6 +41,12 @@
                                 <Label Text="ENTRIES HALTED" FontSize="11" FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light=#991B1B, Dark=#FECACA}"/>
                             </Border>
+                            <Border Style="{StaticResource Pill}"
+                                    IsVisible="{Binding PausedByUser}"
+                                    BackgroundColor="{AppThemeBinding Light=#DBEAFE, Dark=#1E3A8A}">
+                                <Label Text="BUYING PAUSED" FontSize="11" FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#1E40AF, Dark=#BFDBFE}"/>
+                            </Border>
                         </HorizontalStackLayout>
                     </VerticalStackLayout>
                 </Border>
@@ -58,6 +64,28 @@
                             HeightRequest="36"
                             CornerRadius="8"/>
                 </Grid>
+
+                <!-- Pause/Resume Buying buttons -->
+                <HorizontalStackLayout Spacing="8">
+                    <Button Text="Pause Buying"
+                            Style="{StaticResource SecondaryButton}"
+                            Clicked="OnPauseBuyingClicked"
+                            IsVisible="{Binding PausedByUser, Converter={StaticResource InverseBoolConverter}}"
+                            IsEnabled="{Binding IsPauseInFlight, Converter={StaticResource InverseBoolConverter}}"
+                            Padding="12,6"
+                            FontSize="13"
+                            HeightRequest="36"
+                            CornerRadius="8"/>
+                    <Button Text="Resume Buying"
+                            Style="{StaticResource SecondaryButton}"
+                            Clicked="OnResumeBuyingClicked"
+                            IsVisible="{Binding PausedByUser}"
+                            IsEnabled="{Binding IsPauseInFlight, Converter={StaticResource InverseBoolConverter}}"
+                            Padding="12,6"
+                            FontSize="13"
+                            HeightRequest="36"
+                            CornerRadius="8"/>
+                </HorizontalStackLayout>
 
                 <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Positions}">
                     <BindableLayout.EmptyView>

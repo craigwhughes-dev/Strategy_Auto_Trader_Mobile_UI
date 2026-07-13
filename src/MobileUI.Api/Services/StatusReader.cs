@@ -64,6 +64,7 @@ public class StatusReader : IStatusReader
                 HeartbeatAgeSeconds = heartbeatAge,
                 DryRun = root.GetProperty("dry_run").GetBoolean(),
                 HaltNewEntries = root.GetProperty("halt_new_entries").GetBoolean(),
+                PausedByUser = root.TryGetProperty("paused_by_user", out var pausedByUser) && pausedByUser.GetBoolean(),
                 LastReconcileDate = root.GetProperty("last_reconcile_date").GetString(),
             };
 

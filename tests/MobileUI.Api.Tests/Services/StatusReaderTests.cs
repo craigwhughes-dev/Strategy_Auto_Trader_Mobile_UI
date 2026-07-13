@@ -226,4 +226,59 @@ public class StatusReaderTests
 
         File.Delete(testFile);
     }
+
+    [Test]
+    public void ReadStatus_ParsesPausedByUserTrue()
+    {
+        var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
+        var recentHeartbeat = DateTime.UtcNow.ToString("O");
+        var json = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{recentHeartbeat}"",
+  ""daemon_pid"": 123,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""paused_by_user"": true,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{}},
+  ""positions"": {{}}
+}}";
+
+        File.WriteAllText(testFile, json);
+
+        var status = _reader.ReadStatus();
+
+        Assert.That(status.PausedByUser, Is.True);
+
+        File.Delete(testFile);
+    }
+
+    [Test]
+    public void ReadStatus_MissingPausedByUser_DefaultsFalse()
+    {
+        var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
+        var recentHeartbeat = DateTime.UtcNow.ToString("O");
+        var json = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{recentHeartbeat}"",
+  ""daemon_pid"": 123,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{}},
+  ""positions"": {{}}
+}}";
+
+        File.WriteAllText(testFile, json);
+
+        var status = _reader.ReadStatus();
+
+        Assert.That(status.PausedByUser, Is.False);
+
+        File.Delete(testFile);
+    }
 }

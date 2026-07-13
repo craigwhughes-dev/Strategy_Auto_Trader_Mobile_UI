@@ -6,6 +6,7 @@ public class DaemonStatus
     public int? HeartbeatAgeSeconds { get; set; }
     public bool DryRun { get; set; }
     public bool HaltNewEntries { get; set; }
+    public bool PausedByUser { get; set; }
     public List<string> ReconciliationDiscrepancies { get; set; } = new();
     public string? LastReconcileDate { get; set; }
     public TradesDaily? TradesDaily { get; set; }

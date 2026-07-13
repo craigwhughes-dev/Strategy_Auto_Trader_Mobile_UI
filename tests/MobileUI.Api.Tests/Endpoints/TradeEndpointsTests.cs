@@ -171,6 +171,60 @@ public class TradeEndpointsTests
         Assert.That(result, Is.InstanceOf<IResult>());
     }
 
+    [Test]
+    public async Task PauseBuyingAsync_Returns202Accepted()
+    {
+        var result = await InvokePauseBuyingEndpoint(_commandManager);
+
+        Assert.That(result, Is.InstanceOf<IResult>());
+    }
+
+    [Test]
+    public async Task PauseBuyingAsync_CreatedCommandIsCorrect()
+    {
+        var commandId = await _commandManager.CreatePauseBuyingCommandAsync();
+        var command = await _commandManager.GetCommandAsync(commandId);
+
+        Assert.That(command!.Action, Is.EqualTo("PAUSE_BUYING"));
+        Assert.That(command.Ticker, Is.Null.Or.Empty);
+    }
+
+    [Test]
+    public async Task PauseBuyingAsync_RejectsDuplicatePending()
+    {
+        await _commandManager.CreatePauseBuyingCommandAsync();
+        var result = await InvokePauseBuyingEndpoint(_commandManager);
+
+        Assert.That(result, Is.InstanceOf<IResult>());
+    }
+
+    [Test]
+    public async Task ResumeBuyingAsync_Returns202Accepted()
+    {
+        var result = await InvokeResumeBuyingEndpoint(_commandManager);
+
+        Assert.That(result, Is.InstanceOf<IResult>());
+    }
+
+    [Test]
+    public async Task ResumeBuyingAsync_CreatedCommandIsCorrect()
+    {
+        var commandId = await _commandManager.CreateResumeBuyingCommandAsync();
+        var command = await _commandManager.GetCommandAsync(commandId);
+
+        Assert.That(command!.Action, Is.EqualTo("RESUME_BUYING"));
+        Assert.That(command.Ticker, Is.Null.Or.Empty);
+    }
+
+    [Test]
+    public async Task ResumeBuyingAsync_RejectsDuplicatePending()
+    {
+        await _commandManager.CreateResumeBuyingCommandAsync();
+        var result = await InvokeResumeBuyingEndpoint(_commandManager);
+
+        Assert.That(result, Is.InstanceOf<IResult>());
+    }
+
     // Helper methods to invoke endpoint handlers
     private async Task<IResult> InvokeSellEndpoint(SellRequest request, ICommandManager manager)
     {
@@ -256,6 +310,44 @@ public class TradeEndpointsTests
 
         return Results.Ok(new { message = "Command cancelled" });
     }
+
+    private async Task<IResult> InvokePauseBuyingEndpoint(ICommandManager manager)
+    {
+        try
+        {
+            var commandId = await manager.CreatePauseBuyingCommandAsync();
+            var command = await manager.GetCommandAsync(commandId);
+            return Results.Accepted($"/api/trades/commands/{commandId}", new CommandResponse
+            {
+                Id = commandId,
+                Status = command?.Status ?? "pending",
+                Message = "Pause buying queued"
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Conflict(new { error = ex.Message });
+        }
+    }
+
+    private async Task<IResult> InvokeResumeBuyingEndpoint(ICommandManager manager)
+    {
+        try
+        {
+            var commandId = await manager.CreateResumeBuyingCommandAsync();
+            var command = await manager.GetCommandAsync(commandId);
+            return Results.Accepted($"/api/trades/commands/{commandId}", new CommandResponse
+            {
+                Id = commandId,
+                Status = command?.Status ?? "pending",
+                Message = "Resume buying queued"
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Conflict(new { error = ex.Message });
+        }
+    }
 }
 
 internal class MockCommandManager : ICommandManager
@@ -290,6 +382,40 @@ internal class MockCommandManager : ICommandManager
         var command = new TradeCommand
         {
             Action = "SELL_ALL",
+            ExpiresAtUtc = DateTime.UtcNow.AddHours(4)
+        };
+
+        _commands[command.Id] = command;
+        await Task.Delay(0); // Simulate async
+        return command.Id;
+    }
+
+    public async Task<string> CreatePauseBuyingCommandAsync()
+    {
+        var existingPause = _commands.Values.FirstOrDefault(c => c.Action == "PAUSE_BUYING" && c.Status == "pending");
+        if (existingPause != null)
+            throw new InvalidOperationException("A pending PAUSE_BUYING command already exists");
+
+        var command = new TradeCommand
+        {
+            Action = "PAUSE_BUYING",
+            ExpiresAtUtc = DateTime.UtcNow.AddHours(4)
+        };
+
+        _commands[command.Id] = command;
+        await Task.Delay(0); // Simulate async
+        return command.Id;
+    }
+
+    public async Task<string> CreateResumeBuyingCommandAsync()
+    {
+        var existingResume = _commands.Values.FirstOrDefault(c => c.Action == "RESUME_BUYING" && c.Status == "pending");
+        if (existingResume != null)
+            throw new InvalidOperationException("A pending RESUME_BUYING command already exists");
+
+        var command = new TradeCommand
+        {
+            Action = "RESUME_BUYING",
             ExpiresAtUtc = DateTime.UtcNow.AddHours(4)
         };
 

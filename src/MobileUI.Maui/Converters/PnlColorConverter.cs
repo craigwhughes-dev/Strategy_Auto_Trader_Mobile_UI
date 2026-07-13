@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace MobileUI.Maui.Converters;
+namespace StrategyTradingAppUI.Maui.Converters;
 
 public class PnlColorConverter : IValueConverter
 {

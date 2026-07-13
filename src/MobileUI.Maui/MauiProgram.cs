@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using MobileUI.Maui.Services;
-using MobileUI.Maui.ViewModels;
+using StrategyTradingAppUI.Maui.Services;
+using StrategyTradingAppUI.Maui.ViewModels;
 
-namespace MobileUI.Maui;
+namespace StrategyTradingAppUI.Maui;
 
 public static class MauiProgram
 {

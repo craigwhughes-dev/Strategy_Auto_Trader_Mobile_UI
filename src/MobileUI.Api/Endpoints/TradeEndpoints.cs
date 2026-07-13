@@ -19,6 +19,14 @@ public static class TradeEndpoints
             .WithName("Sell All")
 ;
 
+        group.MapPost("/pause-buying", PauseBuyingAsync)
+            .WithName("Pause Buying")
+;
+
+        group.MapPost("/resume-buying", ResumeBuyingAsync)
+            .WithName("Resume Buying")
+;
+
         group.MapGet("/commands", GetPendingCommandsAsync)
             .WithName("Get Pending Commands")
 ;
@@ -66,6 +74,44 @@ public static class TradeEndpoints
             Status = command?.Status ?? "pending",
             Message = "Sell all positions queued"
         });
+    }
+
+    private static async Task<IResult> PauseBuyingAsync(ICommandManager commandManager)
+    {
+        try
+        {
+            var commandId = await commandManager.CreatePauseBuyingCommandAsync();
+            var command = await commandManager.GetCommandAsync(commandId);
+            return Results.Accepted($"/api/trades/commands/{commandId}", new CommandResponse
+            {
+                Id = commandId,
+                Status = command?.Status ?? "pending",
+                Message = "Pause buying queued"
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Conflict(new { error = ex.Message });
+        }
+    }
+
+    private static async Task<IResult> ResumeBuyingAsync(ICommandManager commandManager)
+    {
+        try
+        {
+            var commandId = await commandManager.CreateResumeBuyingCommandAsync();
+            var command = await commandManager.GetCommandAsync(commandId);
+            return Results.Accepted($"/api/trades/commands/{commandId}", new CommandResponse
+            {
+                Id = commandId,
+                Status = command?.Status ?? "pending",
+                Message = "Resume buying queued"
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Conflict(new { error = ex.Message });
+        }
     }
 
     private static async Task<IResult> GetPendingCommandsAsync(ICommandManager commandManager)

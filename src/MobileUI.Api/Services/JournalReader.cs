@@ -74,7 +74,7 @@ public class JournalReader : IJournalReader
             {
                 try
                 {
-                    var ticker = GetField(allLines[i], headerMap, "ticker", "")?.ToUpperInvariant() ?? "";
+                    var ticker = GetField(allLines[i], headerMap, "ticker")?.ToUpperInvariant() ?? "";
                     if (string.IsNullOrEmpty(ticker))
                         continue;
 
@@ -84,14 +84,14 @@ public class JournalReader : IJournalReader
                     var record = new TradeRecord
                     {
                         Ticker = ticker,
-                        Market = GetField(allLines[i], headerMap, "market", "") ?? market,
-                        Currency = GetField(allLines[i], headerMap, "currency", "") ?? currency,
-                        DateOpened = TryParseDate(GetField(allLines[i], headerMap, "date_opened", "")) ?? DateTime.MinValue,
-                        DateClosed = TryParseDate(GetField(allLines[i], headerMap, "date_closed", "")) ?? DateTime.MinValue,
-                        EntryPrice = TryParseDouble(GetField(allLines[i], headerMap, "entry_price", "")) ?? 0,
-                        ExitPrice = TryParseDouble(GetField(allLines[i], headerMap, "exit_price", "")) ?? 0,
-                        Quantity = TryParseDouble(GetField(allLines[i], headerMap, "quantity", "")) ?? 0,
-                        RoundtripPnl = TryParseDouble(GetField(allLines[i], headerMap, "pnl_usd", "")) ?? 0,
+                        Market = GetField(allLines[i], headerMap, "market") ?? market,
+                        Currency = GetField(allLines[i], headerMap, "currency") ?? currency,
+                        DateOpened = TryParseDate(GetField(allLines[i], headerMap, "date_opened")) ?? DateTime.MinValue,
+                        DateClosed = TryParseDate(GetField(allLines[i], headerMap, "date_closed")) ?? DateTime.MinValue,
+                        EntryPrice = TryParseDouble(GetField(allLines[i], headerMap, "entry_price")) ?? 0,
+                        ExitPrice = TryParseDouble(GetField(allLines[i], headerMap, "exit_price")) ?? 0,
+                        Quantity = TryParseDouble(GetField(allLines[i], headerMap, "quantity")) ?? 0,
+                        RoundtripPnl = TryParseDouble(GetField(allLines[i], headerMap, "pnl_usd")) ?? 0,
                     };
 
                     trades.Add(record);
@@ -128,14 +128,16 @@ public class JournalReader : IJournalReader
         return "USD";
     }
 
-    private static string? GetField(string[] fields, Dictionary<string, int> headerMap, string fieldName, string defaultIfMissing)
+    private static string? GetField(string[] fields, Dictionary<string, int> headerMap, string fieldName)
     {
         if (headerMap.TryGetValue(fieldName, out var index) && index < fields.Length)
         {
             var value = fields[index].Trim();
-            return string.IsNullOrEmpty(value) ? defaultIfMissing : value;
+            if (string.IsNullOrEmpty(value))
+                return null;
+            return value;
         }
-        return defaultIfMissing;
+        return null;
     }
 
     private static DateTime? TryParseDate(string? value)

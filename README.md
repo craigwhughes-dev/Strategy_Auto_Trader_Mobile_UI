@@ -219,6 +219,33 @@ private string _baseUrl = "http://192.168.1.100:5000";  // Your PC's LAN IP
 
 ---
 
+## Auto-start (Task Scheduler)
+
+To run the API automatically at user logon on Windows:
+
+```powershell
+# Publish and register the task
+.\scripts\install-api-task.ps1
+
+# Or specify a custom repo path
+.\scripts\install-api-task.ps1 -RepoRoot "C:\path\to\repo"
+
+# Start the task immediately
+Start-ScheduledTask -TaskName "MobileUI.Api"
+
+# View task status
+Get-ScheduledTaskInfo -TaskName "MobileUI.Api"
+```
+
+**Prerequisites:**
+- Self-signed certificate thumbprint in `CERTIFICATE_THUMBPRINT` environment variable or `appsettings.json`
+- API key in `STRATEGY_API_KEY` environment variable
+- Daemon state paths configured in `appsettings.json`
+
+The task will restart automatically on failure (3 retries, 1-minute intervals).
+
+---
+
 ## References
 
 - Full implementation plan: [plan file](https://github.com/anthropics/claude-code/blob/main/docs/ticklish-prancing-marble.md)

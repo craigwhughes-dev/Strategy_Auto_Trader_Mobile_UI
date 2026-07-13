@@ -1,4 +1,4 @@
-﻿namespace MobileUI.Maui;
+﻿namespace StrategyTradingAppUI.Maui;
 
 public partial class AppShell : Shell
 {

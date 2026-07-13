@@ -76,4 +76,82 @@ GOOG,SP500,USD,2026-01-10,2026-02-10,2500.0,2550.0,1.0,50.0
 
         Assert.That(trades.Count, Is.EqualTo(2));
     }
+
+    [Test]
+    public void ReadRecentTrades_WithoutMarketCurrencyColumns_DeriveFromTicker()
+    {
+        var csv = """
+ticker,date_opened,date_closed,entry_price,exit_price,quantity,roundtrip_pnl
+HSBA.L,2026-01-01,2026-02-01,500.0,550.0,10.0,500.0
+AAPL,2026-01-05,2026-02-05,150.0,155.0,5.0,25.0
+""";
+
+        File.WriteAllText(_journalPath, csv);
+
+        var trades = _reader.ReadRecentTrades(10);
+
+        Assert.That(trades.Count, Is.EqualTo(2));
+
+        var lseTrade = trades.FirstOrDefault(t => t.Ticker == "HSBA.L");
+        Assert.That(lseTrade, Is.Not.Null);
+        Assert.That(lseTrade!.Market, Is.EqualTo("LSE"));
+        Assert.That(lseTrade.Currency, Is.EqualTo("GBX"));
+
+        var nasdaqTrade = trades.FirstOrDefault(t => t.Ticker == "AAPL");
+        Assert.That(nasdaqTrade, Is.Not.Null);
+        Assert.That(nasdaqTrade!.Market, Is.EqualTo("UNKNOWN"));
+        Assert.That(nasdaqTrade.Currency, Is.EqualTo("USD"));
+    }
+
+    [Test]
+    public void ReadRecentTrades_WithPopulatedMarketCurrencyColumns_UsesExplicitValues()
+    {
+        var csv = """
+ticker,market,currency,date_opened,date_closed,entry_price,exit_price,quantity,roundtrip_pnl
+HSBA.L,LSE,GBX,2026-01-01,2026-02-01,500.0,550.0,10.0,500.0
+AAPL,NASDAQ,USD,2026-01-05,2026-02-05,150.0,155.0,5.0,25.0
+""";
+
+        File.WriteAllText(_journalPath, csv);
+
+        var trades = _reader.ReadRecentTrades(10);
+
+        Assert.That(trades.Count, Is.EqualTo(2));
+
+        var lseTrade = trades.FirstOrDefault(t => t.Ticker == "HSBA.L");
+        Assert.That(lseTrade, Is.Not.Null);
+        Assert.That(lseTrade!.Market, Is.EqualTo("LSE"));
+        Assert.That(lseTrade.Currency, Is.EqualTo("GBX"));
+
+        var nasdaqTrade = trades.FirstOrDefault(t => t.Ticker == "AAPL");
+        Assert.That(nasdaqTrade, Is.Not.Null);
+        Assert.That(nasdaqTrade!.Market, Is.EqualTo("NASDAQ"));
+        Assert.That(nasdaqTrade.Currency, Is.EqualTo("USD"));
+    }
+
+    [Test]
+    public void ReadRecentTrades_WithEmptyMarketCurrencyValues_FallsBackToTickerDerived()
+    {
+        var csv = """
+ticker,market,currency,date_opened,date_closed,entry_price,exit_price,quantity,roundtrip_pnl
+HSBA.L, , ,2026-01-01,2026-02-01,500.0,550.0,10.0,500.0
+AAPL, , ,2026-01-05,2026-02-05,150.0,155.0,5.0,25.0
+""";
+
+        File.WriteAllText(_journalPath, csv);
+
+        var trades = _reader.ReadRecentTrades(10);
+
+        Assert.That(trades.Count, Is.EqualTo(2));
+
+        var lseTrade = trades.FirstOrDefault(t => t.Ticker == "HSBA.L");
+        Assert.That(lseTrade, Is.Not.Null);
+        Assert.That(lseTrade!.Market, Is.EqualTo("LSE"));
+        Assert.That(lseTrade.Currency, Is.EqualTo("GBX"));
+
+        var aapl = trades.FirstOrDefault(t => t.Ticker == "AAPL");
+        Assert.That(aapl, Is.Not.Null);
+        Assert.That(aapl!.Market, Is.EqualTo("UNKNOWN"));
+        Assert.That(aapl.Currency, Is.EqualTo("USD"));
+    }
 }

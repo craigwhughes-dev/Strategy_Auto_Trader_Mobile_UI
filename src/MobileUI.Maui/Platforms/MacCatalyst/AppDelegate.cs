@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace MobileUI.Maui;
+namespace StrategyTradingAppUI.Maui;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

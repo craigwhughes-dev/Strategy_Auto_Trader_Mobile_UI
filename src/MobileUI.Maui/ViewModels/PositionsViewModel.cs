@@ -1,21 +1,26 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using MobileUI.Maui.Models;
-using MobileUI.Maui.Services;
+using Microsoft.Maui;
+using Microsoft.Maui.Controls;
+using StrategyTradingAppUI.Maui.Models;
+using StrategyTradingAppUI.Maui.Services;
 
-namespace MobileUI.Maui.ViewModels;
+namespace StrategyTradingAppUI.Maui.ViewModels;
 
 public class PositionsViewModel : BindableObject
 {
     private readonly IApiClient _apiClient;
+    private readonly Action<Action> _dispatcher;
 
     private bool _isLoading;
     private string _statusMessage = "Loading...";
     private bool _daemonRunning;
     private bool _dryRun;
     private bool _haltNewEntries;
+    private bool _pausedByUser;
     private int? _heartbeatAgeSeconds;
     private bool _isSellInFlight;
+    private bool _isPauseInFlight;
     private DaemonStatus? _lastHealth;
 
     public bool IsLoading
@@ -48,6 +53,12 @@ public class PositionsViewModel : BindableObject
         set { _haltNewEntries = value; OnPropertyChanged(); }
     }
 
+    public bool PausedByUser
+    {
+        get => _pausedByUser;
+        set { _pausedByUser = value; OnPropertyChanged(); }
+    }
+
     public int? HeartbeatAgeSeconds
     {
         get => _heartbeatAgeSeconds;
@@ -60,15 +71,22 @@ public class PositionsViewModel : BindableObject
         set { _isSellInFlight = value; OnPropertyChanged(); }
     }
 
+    public bool IsPauseInFlight
+    {
+        get => _isPauseInFlight;
+        set { _isPauseInFlight = value; OnPropertyChanged(); }
+    }
+
     public ObservableCollection<Position> Positions { get; } = new();
     public ObservableCollection<TradeRecord> RecentTrades { get; } = new();
     public ObservableCollection<TradeCommand> PendingCommands { get; } = new();
 
     public ICommand RefreshCommand { get; }
 
-    public PositionsViewModel(IApiClient apiClient)
+    public PositionsViewModel(IApiClient apiClient, Action<Action>? dispatcher = null)
     {
         _apiClient = apiClient;
+        _dispatcher = dispatcher ?? MainThread.BeginInvokeOnMainThread;
         RefreshCommand = new Command(async () => await RefreshAsync());
     }
 
@@ -102,7 +120,7 @@ public class PositionsViewModel : BindableObject
         try
         {
             var positions = await _apiClient.GetPositionsAsync();
-            MainThread.BeginInvokeOnMainThread(() =>
+            _dispatcher(() =>
             {
                 Positions.Clear();
                 foreach (var pos in positions)
@@ -124,11 +142,12 @@ public class PositionsViewModel : BindableObject
         {
             var health = await _apiClient.GetHealthAsync();
             _lastHealth = health;
-            MainThread.BeginInvokeOnMainThread(() =>
+            _dispatcher(() =>
             {
                 DaemonRunning = health.DaemonRunning;
                 DryRun = health.DryRun;
                 HaltNewEntries = health.HaltNewEntries;
+                PausedByUser = health.PausedByUser;
                 HeartbeatAgeSeconds = health.HeartbeatAgeSeconds;
             });
         }
@@ -144,7 +163,7 @@ public class PositionsViewModel : BindableObject
         try
         {
             var trades = await _apiClient.GetRecentTradesAsync(count: 5);
-            MainThread.BeginInvokeOnMainThread(() =>
+            _dispatcher(() =>
             {
                 RecentTrades.Clear();
                 foreach (var trade in trades)
@@ -165,7 +184,7 @@ public class PositionsViewModel : BindableObject
         try
         {
             var commands = await _apiClient.GetCommandsAsync();
-            MainThread.BeginInvokeOnMainThread(() =>
+            _dispatcher(() =>
             {
                 PendingCommands.Clear();
                 foreach (var cmd in commands)
@@ -245,6 +264,96 @@ public class PositionsViewModel : BindableObject
         finally
         {
             IsSellInFlight = false;
+        }
+    }
+
+    public async Task<CommandResponse> SubmitPauseBuyingAsync()
+    {
+        IsPauseInFlight = true;
+        try
+        {
+            var response = await _apiClient.PauseBuyingAsync();
+            if (response.Status == "error" || string.IsNullOrEmpty(response.Id))
+                return response;
+
+            var finalCommand = await PollCommandStatusAsync(response.Id);
+            if (finalCommand != null)
+            {
+                var result = new CommandResponse
+                {
+                    Id = finalCommand.Id,
+                    Status = finalCommand.Status,
+                    Message = finalCommand.Status switch
+                    {
+                        "filled" => "Buying paused",
+                        "error" => finalCommand.ErrorMessage ?? "Unknown error",
+                        _ => response.Message
+                    }
+                };
+                if (result.Status == "filled")
+                {
+                    try
+                    {
+                        await LoadHealthAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Command outcome already determined; pill corrects on next refresh
+                        System.Diagnostics.Debug.WriteLine($"Health refresh after pause failed: {ex}");
+                    }
+                }
+                return result;
+            }
+            return response;
+        }
+        finally
+        {
+            IsPauseInFlight = false;
+        }
+    }
+
+    public async Task<CommandResponse> SubmitResumeBuyingAsync()
+    {
+        IsPauseInFlight = true;
+        try
+        {
+            var response = await _apiClient.ResumeBuyingAsync();
+            if (response.Status == "error" || string.IsNullOrEmpty(response.Id))
+                return response;
+
+            var finalCommand = await PollCommandStatusAsync(response.Id);
+            if (finalCommand != null)
+            {
+                var result = new CommandResponse
+                {
+                    Id = finalCommand.Id,
+                    Status = finalCommand.Status,
+                    Message = finalCommand.Status switch
+                    {
+                        "filled" => "Buying resumed",
+                        "error" => finalCommand.ErrorMessage ?? "Unknown error",
+                        _ => response.Message
+                    }
+                };
+                if (result.Status == "filled")
+                {
+                    try
+                    {
+                        await LoadHealthAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Command outcome already determined; pill corrects on next refresh
+                        System.Diagnostics.Debug.WriteLine($"Health refresh after resume failed: {ex}");
+                    }
+                }
+                return result;
+            }
+            return response;
+        }
+        finally
+        {
+            IsPauseInFlight = false;
         }
     }
 

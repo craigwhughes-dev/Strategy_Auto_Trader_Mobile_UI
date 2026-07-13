@@ -212,6 +212,59 @@ public class CommandManagerTests
         Assert.That(File.Exists(pendingFile), Is.True);
         Assert.That(!File.Exists(pendingFile + ".tmp"), "Temp file should not exist after write");
     }
+
+    [Test]
+    public async Task CreatePauseBuyingCommandAsync_CreatesCommand()
+    {
+        var commandId = await _manager.CreatePauseBuyingCommandAsync();
+
+        Assert.That(commandId, Is.Not.Null.And.Not.Empty);
+        var command = await _manager.GetCommandAsync(commandId);
+        Assert.That(command, Is.Not.Null);
+        Assert.That(command!.Action, Is.EqualTo("PAUSE_BUYING"));
+        Assert.That(command.Ticker, Is.Null.Or.Empty);
+    }
+
+    [Test]
+    public async Task CreateResumeBuyingCommandAsync_CreatesCommand()
+    {
+        var commandId = await _manager.CreateResumeBuyingCommandAsync();
+
+        Assert.That(commandId, Is.Not.Null.And.Not.Empty);
+        var command = await _manager.GetCommandAsync(commandId);
+        Assert.That(command, Is.Not.Null);
+        Assert.That(command!.Action, Is.EqualTo("RESUME_BUYING"));
+        Assert.That(command.Ticker, Is.Null.Or.Empty);
+    }
+
+    [Test]
+    public async Task CreatePauseBuyingCommandAsync_RejectsWhenPendingExists()
+    {
+        await _manager.CreatePauseBuyingCommandAsync();
+
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _manager.CreatePauseBuyingCommandAsync());
+    }
+
+    [Test]
+    public async Task CreateResumeBuyingCommandAsync_RejectsWhenPendingExists()
+    {
+        await _manager.CreateResumeBuyingCommandAsync();
+
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _manager.CreateResumeBuyingCommandAsync());
+    }
+
+    [Test]
+    public async Task CreatePauseBuyingCommandAsync_AllowsAfterCancel()
+    {
+        var id1 = await _manager.CreatePauseBuyingCommandAsync();
+        await _manager.CancelCommandAsync(id1);
+
+        // Should succeed since previous command was cancelled
+        var id2 = await _manager.CreatePauseBuyingCommandAsync();
+        Assert.That(id2, Is.Not.EqualTo(id1));
+    }
 }
 
 internal class MockStatusReader : IStatusReader

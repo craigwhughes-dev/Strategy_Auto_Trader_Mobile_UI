@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace MobileUI.Maui;
+namespace StrategyTradingAppUI.Maui;
 
 public class Program
 {

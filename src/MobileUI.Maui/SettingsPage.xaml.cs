@@ -1,6 +1,6 @@
-using MobileUI.Maui.ViewModels;
+using StrategyTradingAppUI.Maui.ViewModels;
 
-namespace MobileUI.Maui;
+namespace StrategyTradingAppUI.Maui;
 
 public partial class SettingsPage : ContentPage
 {

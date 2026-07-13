@@ -1,7 +1,7 @@
-﻿using MobileUI.Maui.Models;
-using MobileUI.Maui.ViewModels;
+﻿using StrategyTradingAppUI.Maui.Models;
+using StrategyTradingAppUI.Maui.ViewModels;
 
-namespace MobileUI.Maui;
+namespace StrategyTradingAppUI.Maui;
 
 public partial class MainPage : ContentPage
 {
@@ -15,7 +15,7 @@ public partial class MainPage : ContentPage
 		Loaded += async (s, e) => await viewModel.RefreshAsync();
 	}
 
-	private async void OnSellPositionClicked(object sender, EventArgs e)
+	private async void OnSellPositionClicked(object? sender, EventArgs e)
 	{
 		if (sender is not Button button || button.CommandParameter is not string ticker)
 			return;
@@ -59,7 +59,7 @@ public partial class MainPage : ContentPage
 		}
 	}
 
-	private async void OnSellAllClicked(object sender, EventArgs e)
+	private async void OnSellAllClicked(object? sender, EventArgs e)
 	{
 		if (_viewModel.Positions.Count == 0)
 		{
@@ -96,7 +96,79 @@ public partial class MainPage : ContentPage
 		}
 	}
 
-	private async void OnCancelCommandClicked(object sender, EventArgs e)
+	private async void OnPauseBuyingClicked(object? sender, EventArgs e)
+	{
+		var confirmPause = await DisplayAlertAsync("Pause Buying", "Pause new buying? Existing sells will still work.", "Yes", "Cancel");
+		if (!confirmPause)
+			return;
+
+		if (_viewModel.Positions.Count > 0)
+		{
+			var sellFirst = await DisplayAlertAsync("Open Positions", "Sell all open positions before pausing?", "Yes", "No");
+			if (sellFirst)
+			{
+				try
+				{
+					var sellResponse = await _viewModel.SubmitSellAllAsync();
+					var sellSummary = sellResponse.Status switch
+					{
+						"filled" => $"Sell all completed: {sellResponse.Message}",
+						"pending" or "queued_for_open" => "Sell all order was queued but has not completed yet.",
+						"error" => $"Sell all reported a problem: {sellResponse.Message}",
+						_ => $"Sell all result: {sellResponse.Message}"
+					};
+					await DisplayAlertAsync("Sell All Result", $"{sellSummary}\n\nProceeding to pause buying.", "OK");
+				}
+				catch (Exception ex)
+				{
+					await DisplayAlertAsync("Sell All Result",
+						$"Exception during sell all: {ex.Message}\n\nProceeding to pause buying.", "OK");
+				}
+				// Sell-all is best-effort per product decision: whatever happened above
+				// (full success, partial failure, or total failure), the pause below is
+				// always submitted regardless.
+			}
+		}
+
+		try
+		{
+			var response = await _viewModel.SubmitPauseBuyingAsync();
+			if (response.Status == "filled")
+				await DisplayAlertAsync("Buying Paused", "New buy orders are now paused. Sells still work normally.", "OK");
+			else if (response.Status is "pending" or "queued_for_open")
+				await DisplayAlertAsync("Pause Queued", "Pause command queued; it will take effect shortly.", "OK");
+			else
+				await DisplayAlertAsync("Error", $"Failed to pause buying: {response.Message}", "OK");
+		}
+		catch (Exception ex)
+		{
+			await DisplayAlertAsync("Error", $"Exception during pause: {ex.Message}", "OK");
+		}
+	}
+
+	private async void OnResumeBuyingClicked(object? sender, EventArgs e)
+	{
+		var confirm = await DisplayAlertAsync("Resume Buying", "Resume new buying? The daemon will start placing BUY orders again.", "Yes", "Cancel");
+		if (!confirm)
+			return;
+
+		try
+		{
+			var response = await _viewModel.SubmitResumeBuyingAsync();
+			if (response.Status == "filled")
+				await DisplayAlertAsync("Buying Resumed", "New buy orders are now enabled.", "OK");
+			else if (response.Status is "pending" or "queued_for_open")
+				await DisplayAlertAsync("Resume Queued", "Resume command queued; it will take effect shortly.", "OK");
+			else
+				await DisplayAlertAsync("Error", $"Failed to resume buying: {response.Message}", "OK");
+		}
+		catch (Exception ex)
+		{
+			await DisplayAlertAsync("Error", $"Exception during resume: {ex.Message}", "OK");
+		}
+	}
+
+	private async void OnCancelCommandClicked(object? sender, EventArgs e)
 	{
 		if (sender is not Button button || button.CommandParameter is not string commandId)
 			return;

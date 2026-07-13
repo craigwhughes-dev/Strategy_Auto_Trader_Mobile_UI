@@ -131,6 +131,8 @@ catch (IOException ex) when (ex.Message.Contains("already in use"))
 {
     Console.Error.WriteLine("ERROR: Port 5000/5001 already in use — is another MobileUI.Api instance running?");
     Console.Error.WriteLine($"Details: {ex.Message}");
+    Console.Error.WriteLine();
+    Console.Error.WriteLine(PortConflictHelper.BuildDiagnosticMessage(new HashSet<int> { 5000, 5001 }));
     Environment.Exit(1);
 }
 catch (Exception ex)

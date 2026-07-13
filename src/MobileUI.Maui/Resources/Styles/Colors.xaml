@@ -41,17 +41,17 @@
     <Color x:Key="Loss">#DC2626</Color>
     <Color x:Key="LossDark">#F87171</Color>
     <Color x:Key="PageBackground">#F2F4F7</Color>
-    <Color x:Key="PageBackgroundDark">#121212</Color>
+    <Color x:Key="PageBackgroundDark">#0A0A0A</Color>
     <Color x:Key="CardBackground">#FFFFFF</Color>
-    <Color x:Key="CardBackgroundDark">#1E1E1E</Color>
+    <Color x:Key="CardBackgroundDark">#141414</Color>
     <Color x:Key="CardBorder">#E5E7EB</Color>
-    <Color x:Key="CardBorderDark">#2F2F2F</Color>
+    <Color x:Key="CardBorderDark">#1F1F1F</Color>
     <Color x:Key="TextPrimary">#111827</Color>
     <Color x:Key="TextPrimaryDark">#F3F4F6</Color>
     <Color x:Key="TextSecondary">#6B7280</Color>
     <Color x:Key="TextSecondaryDark">#9CA3AF</Color>
     <Color x:Key="PillBackground">#EFF6FF</Color>
-    <Color x:Key="PillBackgroundDark">#1E3A5F</Color>
+    <Color x:Key="PillBackgroundDark">#0F2A48</Color>
 
     <SolidColorBrush x:Key="Gray100Brush" Color="{StaticResource Gray100}"/>
     <SolidColorBrush x:Key="Gray200Brush" Color="{StaticResource Gray200}"/>

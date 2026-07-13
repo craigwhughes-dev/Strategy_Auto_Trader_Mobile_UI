@@ -1,8 +1,8 @@
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
-using MobileUI.Maui.Services;
+using StrategyTradingAppUI.Maui.Services;
 
-namespace MobileUI.Maui.ViewModels;
+namespace StrategyTradingAppUI.Maui.ViewModels;
 
 public class SettingsViewModel : BindableObject
 {

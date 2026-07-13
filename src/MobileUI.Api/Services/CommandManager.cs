@@ -7,6 +7,8 @@ public interface ICommandManager
 {
     Task<string> CreateSellCommandAsync(string ticker);
     Task<string> CreateSellAllCommandAsync();
+    Task<string> CreatePauseBuyingCommandAsync();
+    Task<string> CreateResumeBuyingCommandAsync();
     Task<TradeCommand?> GetCommandAsync(string id);
     Task<List<TradeCommand>> GetPendingCommandsAsync();
     Task<bool> CancelCommandAsync(string id);
@@ -61,6 +63,36 @@ public class CommandManager : ICommandManager
         var command = new TradeCommand
         {
             Action = "SELL_ALL",
+            ExpiresAtUtc = DateTime.UtcNow.AddHours(4)
+        };
+
+        return await WriteCommandAsync(command);
+    }
+
+    public async Task<string> CreatePauseBuyingCommandAsync()
+    {
+        var existingCommands = await GetPendingCommandsAsync();
+        if (existingCommands.Any(c => c.Action == "PAUSE_BUYING" && (c.Status == "pending" || c.Status == "queued_for_open")))
+            throw new InvalidOperationException("A pending PAUSE_BUYING command already exists");
+
+        var command = new TradeCommand
+        {
+            Action = "PAUSE_BUYING",
+            ExpiresAtUtc = DateTime.UtcNow.AddHours(4)
+        };
+
+        return await WriteCommandAsync(command);
+    }
+
+    public async Task<string> CreateResumeBuyingCommandAsync()
+    {
+        var existingCommands = await GetPendingCommandsAsync();
+        if (existingCommands.Any(c => c.Action == "RESUME_BUYING" && (c.Status == "pending" || c.Status == "queued_for_open")))
+            throw new InvalidOperationException("A pending RESUME_BUYING command already exists");
+
+        var command = new TradeCommand
+        {
+            Action = "RESUME_BUYING",
             ExpiresAtUtc = DateTime.UtcNow.AddHours(4)
         };
 
