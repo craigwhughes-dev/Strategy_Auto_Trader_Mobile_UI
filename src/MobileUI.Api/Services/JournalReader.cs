@@ -81,6 +81,12 @@ public class JournalReader : IJournalReader
                     var market = GetMarketFromTicker(ticker);
                     var currency = GetCurrencyFromTicker(ticker);
 
+                    var entryPrice = TryParseDouble(GetField(allLines[i], headerMap, "entry_price")) ?? 0;
+                    var quantity = TryParseDouble(GetField(allLines[i], headerMap, "quantity")) ?? 0;
+
+                    if (entryPrice <= 0 || quantity <= 0)
+                        continue;
+
                     var record = new TradeRecord
                     {
                         Ticker = ticker,
@@ -88,9 +94,9 @@ public class JournalReader : IJournalReader
                         Currency = GetField(allLines[i], headerMap, "currency") ?? currency,
                         DateOpened = TryParseDate(GetField(allLines[i], headerMap, "date_opened")) ?? DateTime.MinValue,
                         DateClosed = TryParseDate(GetField(allLines[i], headerMap, "date_closed")) ?? DateTime.MinValue,
-                        EntryPrice = TryParseDouble(GetField(allLines[i], headerMap, "entry_price")) ?? 0,
+                        EntryPrice = entryPrice,
                         ExitPrice = TryParseDouble(GetField(allLines[i], headerMap, "exit_price")) ?? 0,
-                        Quantity = TryParseDouble(GetField(allLines[i], headerMap, "quantity")) ?? 0,
+                        Quantity = quantity,
                         RoundtripPnl = TryParseDouble(GetField(allLines[i], headerMap, "pnl_usd")) ?? 0,
                     };
 

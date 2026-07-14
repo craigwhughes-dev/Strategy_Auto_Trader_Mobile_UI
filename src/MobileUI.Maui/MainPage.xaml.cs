@@ -1,4 +1,5 @@
-﻿using StrategyTradingAppUI.Maui.Models;
+﻿using Microsoft.Maui.Dispatching;
+using StrategyTradingAppUI.Maui.Models;
 using StrategyTradingAppUI.Maui.ViewModels;
 
 namespace StrategyTradingAppUI.Maui;
@@ -6,6 +7,7 @@ namespace StrategyTradingAppUI.Maui;
 public partial class MainPage : ContentPage
 {
 	private readonly PositionsViewModel _viewModel;
+	private readonly IDispatcherTimer _refreshTimer;
 
 	public MainPage(PositionsViewModel viewModel)
 	{
@@ -13,6 +15,23 @@ public partial class MainPage : ContentPage
 		_viewModel = viewModel;
 		BindingContext = viewModel;
 		Loaded += async (s, e) => await viewModel.RefreshAsync();
+
+		_refreshTimer = Dispatcher.CreateTimer();
+		_refreshTimer.Interval = TimeSpan.FromSeconds(10);
+		_refreshTimer.Tick += async (s, e) => await _viewModel.RefreshAsync();
+	}
+
+	protected override void OnAppearing()
+	{
+		base.OnAppearing();
+		_ = _viewModel.RefreshAsync();
+		_refreshTimer.Start();
+	}
+
+	protected override void OnDisappearing()
+	{
+		base.OnDisappearing();
+		_refreshTimer.Stop();
 	}
 
 	private async void OnSellPositionClicked(object? sender, EventArgs e)

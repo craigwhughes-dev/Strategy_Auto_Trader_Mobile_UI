@@ -38,7 +38,7 @@ public class PositionsViewModel : BindableObject
     public bool DaemonRunning
     {
         get => _daemonRunning;
-        set { _daemonRunning = value; OnPropertyChanged(); }
+        set { _daemonRunning = value; OnPropertyChanged(); OnPropertyChanged(nameof(DaemonStatusDetail)); }
     }
 
     public bool DryRun
@@ -62,7 +62,22 @@ public class PositionsViewModel : BindableObject
     public int? HeartbeatAgeSeconds
     {
         get => _heartbeatAgeSeconds;
-        set { _heartbeatAgeSeconds = value; OnPropertyChanged(); }
+        set { _heartbeatAgeSeconds = value; OnPropertyChanged(); OnPropertyChanged(nameof(DaemonStatusDetail)); }
+    }
+
+    public string DaemonStatusDetail
+    {
+        get
+        {
+            if (DaemonRunning || _heartbeatAgeSeconds is not int age)
+                return string.Empty;
+
+            var span = TimeSpan.FromSeconds(age);
+            var formatted = span.TotalMinutes >= 1
+                ? $"{(int)span.TotalMinutes}m {span.Seconds}s"
+                : $"{span.Seconds}s";
+            return $"Last seen {formatted} ago";
+        }
     }
 
     public bool IsSellInFlight
@@ -208,6 +223,7 @@ public class PositionsViewModel : BindableObject
             if (response.Status == "error" || string.IsNullOrEmpty(response.Id))
                 return response;
 
+            await LoadPendingCommandsAsync();
             var finalCommand = await PollCommandStatusAsync(response.Id);
 
             if (finalCommand != null)
@@ -242,6 +258,7 @@ public class PositionsViewModel : BindableObject
             if (response.Status == "error" || string.IsNullOrEmpty(response.Id))
                 return response;
 
+            await LoadPendingCommandsAsync();
             var finalCommand = await PollCommandStatusAsync(response.Id);
 
             if (finalCommand != null)
@@ -276,6 +293,7 @@ public class PositionsViewModel : BindableObject
             if (response.Status == "error" || string.IsNullOrEmpty(response.Id))
                 return response;
 
+            await LoadPendingCommandsAsync();
             var finalCommand = await PollCommandStatusAsync(response.Id);
             if (finalCommand != null)
             {
@@ -321,6 +339,7 @@ public class PositionsViewModel : BindableObject
             if (response.Status == "error" || string.IsNullOrEmpty(response.Id))
                 return response;
 
+            await LoadPendingCommandsAsync();
             var finalCommand = await PollCommandStatusAsync(response.Id);
             if (finalCommand != null)
             {

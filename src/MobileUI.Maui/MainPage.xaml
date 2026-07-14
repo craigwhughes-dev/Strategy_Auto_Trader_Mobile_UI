@@ -27,6 +27,10 @@
                                    VerticalOptions="Center"/>
                         </Grid>
 
+                        <Label Text="{Binding DaemonStatusDetail}"
+                               IsVisible="{Binding DaemonRunning, Converter={StaticResource InverseBoolConverter}}"
+                               Style="{StaticResource CaptionLabel}"/>
+
                         <!-- Mode flags -->
                         <HorizontalStackLayout Spacing="8">
                             <Border Style="{StaticResource Pill}"
@@ -158,7 +162,7 @@
                                         </HorizontalStackLayout>
                                         <Label Text="{Binding Status, StringFormat='Status: {0}'}"
                                                Style="{StaticResource CaptionLabel}"/>
-                                        <Label Text="{Binding RequestedAtUtc, StringFormat='Requested: {0:MMM d, HH:mm}'}"
+                                        <Label Text="{Binding RequestedAtLocal, StringFormat='Requested: {0:MMM d, HH:mm}'}"
                                                Style="{StaticResource CaptionLabel}"/>
                                     </VerticalStackLayout>
 

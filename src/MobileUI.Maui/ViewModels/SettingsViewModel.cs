@@ -141,7 +141,9 @@ public class SettingsViewModel : BindableObject
 		}
 		catch (Exception ex)
 		{
-			StatusMessage = $"Connection failed: {ex.Message}";
+			Console.WriteLine($"[TestConnection] {ex}");
+				var detail = ex.InnerException?.Message ?? ex.Message;
+			StatusMessage = $"Connection failed: {detail}";
 			ShowStatusMessage = true;
 		}
 	}

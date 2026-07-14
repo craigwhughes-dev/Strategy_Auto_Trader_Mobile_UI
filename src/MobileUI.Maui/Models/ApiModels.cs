@@ -66,6 +66,8 @@ public class TradeCommand
     public double? FillPrice { get; set; }
     public int? Quantity { get; set; }
     public string? ErrorMessage { get; set; }
+
+    public DateTime RequestedAtLocal => DateTime.SpecifyKind(RequestedAtUtc, DateTimeKind.Utc).ToLocalTime();
 }
 
 public class CommandResponse

@@ -54,6 +54,38 @@ MSFT,SP500,USD,2026-01-05,2026-02-05,300.0,310.0,5.0,50.0
     }
 
     [Test]
+    public void ReadRecentTrades_SkipsZeroPricePlaceholderRows()
+    {
+        var csv = """
+ticker,market,currency,date_opened,date_closed,entry_price,exit_price,quantity,roundtrip_pnl
+AAPL,SP500,USD,2026-07-05,2026-07-05,0.0,0.0,0.0,0.0
+MSFT,SP500,USD,2026-01-05,2026-02-05,300.0,310.0,5.0,50.0
+""";
+
+        File.WriteAllText(_journalPath, csv);
+
+        var trades = _reader.ReadRecentTrades(10);
+
+        Assert.That(trades.Count, Is.EqualTo(1));
+        Assert.That(trades[0].Ticker, Is.EqualTo("MSFT"));
+    }
+
+    [Test]
+    public void ReadRecentTrades_SkipsZeroQuantityRow()
+    {
+        var csv = """
+ticker,market,currency,date_opened,date_closed,entry_price,exit_price,quantity,roundtrip_pnl
+AAPL,SP500,USD,2026-01-01,2026-02-01,150.0,155.0,0.0,0.0
+""";
+
+        File.WriteAllText(_journalPath, csv);
+
+        var trades = _reader.ReadRecentTrades(10);
+
+        Assert.That(trades.Count, Is.EqualTo(0));
+    }
+
+    [Test]
     public void ReadRecentTrades_WithMissingFile_ReturnsEmptyList()
     {
         var trades = _reader.ReadRecentTrades(10);
