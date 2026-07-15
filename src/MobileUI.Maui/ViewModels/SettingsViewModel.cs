@@ -143,7 +143,9 @@ public class SettingsViewModel : BindableObject
 		{
 			Console.WriteLine($"[TestConnection] {ex}");
 				var detail = ex.InnerException?.Message ?? ex.Message;
-			StatusMessage = $"Connection failed: {detail}";
+			StatusMessage = TailscaleDetector.IsConnected()
+				? $"Connection failed: {detail}"
+				: "Tailscale is not connected on this phone. Open the Tailscale app, connect, then try again.";
 			ShowStatusMessage = true;
 		}
 	}

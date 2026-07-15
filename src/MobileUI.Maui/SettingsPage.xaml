@@ -74,6 +74,7 @@
                 <VerticalStackLayout Spacing="8">
                     <Label Text="How to get these values" FontSize="14" FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"/>
+                    <Label Text="0.  Make sure Tailscale is running and connected on this phone" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
                     <Label Text="1.  On your PC, run: tailscale ip -4" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
                     <Label Text="2.  Use that IP in the API URL (https://[IP]:5001)" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
                     <Label Text="3.  API Key: from generate-api-key.ps1 output" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>

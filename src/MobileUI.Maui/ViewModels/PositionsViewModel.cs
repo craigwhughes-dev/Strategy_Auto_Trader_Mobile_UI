@@ -122,7 +122,9 @@ public class PositionsViewModel : BindableObject
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Refresh error: {ex}");
-            StatusMessage = $"Error: Cannot reach server";
+            StatusMessage = TailscaleDetector.IsConnected()
+                ? "Error: Cannot reach server"
+                : "Error: Tailscale not connected on this phone";
         }
         finally
         {
