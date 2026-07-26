@@ -5,6 +5,8 @@ namespace MobileUI.Api.Endpoints;
 
 public static class PositionsEndpoints
 {
+    private const double PencePerPound = 100.0;
+
     public static void MapPositionsEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api")
@@ -34,8 +36,9 @@ public static class PositionsEndpoints
         {
             if (prices.TryGetValue(ticker, out var price))
             {
-                position.CurrentPrice = price;
-                position.UnrealizedPnl = (price - position.FillPrice) * position.Quantity;
+                var normalizedPrice = NormalizeToPotCurrency(ticker, price);
+                position.CurrentPrice = normalizedPrice;
+                position.UnrealizedPnl = (normalizedPrice - position.FillPrice) * position.Quantity;
             }
 
             positionList.Add(position);
@@ -43,6 +46,19 @@ public static class PositionsEndpoints
 
         positionList.Sort((a, b) => a.Ticker.CompareTo(b.Ticker));
         return Results.Ok(positionList);
+    }
+
+    /// <summary>
+    /// PriceFetcher returns Yahoo's raw quote, which for LSE (".L") tickers is
+    /// pence (GBp), while the daemon normalizes fill_price/cost_value to pounds
+    /// (pot currency) before writing app_status.json. Convert here so PnL isn't
+    /// computed across mismatched units (was inflating LSE PnL ~100x).
+    /// </summary>
+    private static double NormalizeToPotCurrency(string ticker, double price)
+    {
+        return ticker.EndsWith(".L", StringComparison.OrdinalIgnoreCase)
+            ? price / PencePerPound
+            : price;
     }
 
     private static IResult GetRecentTrades(IJournalReader journalReader, int count = 20)

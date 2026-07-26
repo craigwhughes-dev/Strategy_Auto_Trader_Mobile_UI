@@ -77,6 +77,28 @@ public class PositionsEndpointsTests
     }
 
     [Test]
+    public async Task GetPositions_WithLseTicker_ConvertsPenceToPoundsForPnl()
+    {
+        var position = new Position
+        {
+            Ticker = "VOD.L",
+            Quantity = 1000,
+            FillPrice = 1.139,
+            Currency = "GBP"
+        };
+
+        _statusReader.Positions["VOD.L"] = position;
+        _priceFetcher.Prices["VOD.L"] = 113.90; // Yahoo returns LSE quotes in pence
+
+        var result = await InvokeGetPositions(_statusReader, _priceFetcher);
+        var ok = (Ok<List<Position>>)result;
+        var updated = ok.Value!.Single(p => p.Ticker == "VOD.L");
+
+        Assert.That(updated.CurrentPrice, Is.EqualTo(1.139).Within(0.0001));
+        Assert.That(updated.UnrealizedPnl, Is.EqualTo(0.0).Within(0.0001));
+    }
+
+    [Test]
     public async Task GetPositions_WithMissingPrice_SkipsUpdate()
     {
         var position = new Position
@@ -176,8 +198,11 @@ public class PositionsEndpointsTests
         {
             if (prices.TryGetValue(ticker, out var price))
             {
-                position.CurrentPrice = price;
-                position.UnrealizedPnl = (price - position.FillPrice) * position.Quantity;
+                var normalizedPrice = ticker.EndsWith(".L", StringComparison.OrdinalIgnoreCase)
+                    ? price / 100.0
+                    : price;
+                position.CurrentPrice = normalizedPrice;
+                position.UnrealizedPnl = (normalizedPrice - position.FillPrice) * position.Quantity;
             }
 
             positionList.Add(position);
