@@ -91,6 +91,9 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
 var app = builder.Build();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseMiddleware<AuditLoggingMiddleware>();
 app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
 

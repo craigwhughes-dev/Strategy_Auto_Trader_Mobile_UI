@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Strategy Auto Trader</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <h1>Strategy Auto Trader</h1>
+    <div class="topbar-actions">
+      <button id="refreshBtn" class="icon-btn" title="Refresh now">&#8635;</button>
+      <button id="settingsBtn" class="icon-btn" title="API key">&#9881;</button>
+    </div>
+  </div>
+
+  <div id="settingsPanel" class="card settings-panel hidden">
+    <label for="apiKeyInput">API key <span class="caption">(required for Sell / Pause / Resume / Cancel)</span></label>
+    <div class="settings-row">
+      <input id="apiKeyInput" type="password" placeholder="X-Api-Key value" autocomplete="off" />
+      <button id="saveKeyBtn" class="btn secondary">Save</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Status card -->
+  <div class="card">
+    <div class="status-row">
+      <span id="statusDot" class="dot"></span>
+      <span id="statusText" class="status-text">Loading...</span>
+      <span id="statusMessage" class="caption status-message"></span>
+    </div>
+    <div id="statusDetail" class="caption"></div>
+    <div id="pills" class="pill-row"></div>
+  </div>
+
+  <!-- Positions header -->
+  <div class="section-header-row">
+    <span class="section-header">OPEN POSITIONS</span>
+    <button id="sellAllBtn" class="btn secondary small">Sell All</button>
+  </div>
+
+  <div class="button-row">
+    <button id="pauseBtn" class="btn secondary small">Pause Buying</button>
+    <button id="resumeBtn" class="btn secondary small hidden">Resume Buying</button>
+  </div>
+
+  <div id="positionsList" class="list"></div>
+
+  <!-- Pending commands -->
+  <div id="pendingHeader" class="section-header hidden">PENDING COMMANDS</div>
+  <div id="pendingList" class="list"></div>
+
+  <!-- Recent trades -->
+  <div class="section-header">RECENT TRADES</div>
+  <div id="tradesList" class="list"></div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
