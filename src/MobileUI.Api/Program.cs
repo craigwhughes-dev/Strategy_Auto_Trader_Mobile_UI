@@ -47,6 +47,50 @@ static bool IsLocalInterfaceAddress(string ip)
         .Any(addr => addr.Address.Equals(target));
 }
 
+// NetworkInterface.GetAllNetworkInterfaces() can hang indefinitely when a
+// virtual adapter (e.g. Tailscale's WinTun driver) is queried from a
+// non-interactive service context — seen in production as the scheduled
+// task's instance never binding to any port. Bound it so startup can never
+// stall forever regardless of the caller's account/session.
+static bool IsLocalInterfaceAddressWithTimeout(string ip, TimeSpan timeout, out bool timedOut)
+{
+    var task = Task.Run(() => IsLocalInterfaceAddress(ip));
+    if (task.Wait(timeout))
+    {
+        timedOut = false;
+        return task.Result;
+    }
+
+    timedOut = true;
+    return false;
+}
+
+static string ResolveStartupLogPath(IConfiguration configuration)
+{
+    var auditLogPath = configuration["Audit:LogFilePath"];
+    var logsDir = !string.IsNullOrEmpty(auditLogPath)
+        ? Path.GetDirectoryName(auditLogPath)!
+        : Path.Combine(AppContext.BaseDirectory, "logs");
+
+    Directory.CreateDirectory(logsDir);
+    return Path.Combine(logsDir, "startup.log");
+}
+
+static void LogStartup(string logPath, string message)
+{
+    try
+    {
+        File.AppendAllText(logPath, $"{DateTimeOffset.UtcNow:O} {message}{Environment.NewLine}");
+    }
+    catch
+    {
+        // Startup logging must never itself prevent startup.
+    }
+}
+
+var startupLogPath = ResolveStartupLogPath(builder.Configuration);
+LogStartup(startupLogPath, "Startup beginning");
+
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     var isDevelopment = builder.Environment.IsDevelopment();
@@ -67,20 +111,33 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
         // Kestrel's Listen() only registers configuration here; the actual socket bind happens later
         // inside app.Run(), so a try/catch around Listen() can never observe a bad-address failure.
         // Check the address is actually assigned to a local interface before registering it.
-        if (!string.IsNullOrEmpty(tailscaleIp) && IsLocalInterfaceAddress(tailscaleIp))
+        var timedOut = false;
+        var matched = !string.IsNullOrEmpty(tailscaleIp)
+            && IsLocalInterfaceAddressWithTimeout(tailscaleIp, TimeSpan.FromSeconds(5), out timedOut);
+
+        if (!string.IsNullOrEmpty(tailscaleIp) && timedOut)
         {
+            LogStartup(startupLogPath, $"WARNING: interface enumeration for {tailscaleIp} timed out after 5s; falling back to 0.0.0.0");
+            Console.WriteLine($"Warning: checking Tailscale interface {tailscaleIp} timed out. Binding to 0.0.0.0 instead.");
+        }
+
+        if (matched)
+        {
+            LogStartup(startupLogPath, $"Binding to Tailscale interface: {tailscaleIp}");
             Console.WriteLine($"Binding to Tailscale interface: {tailscaleIp}");
-            serverOptions.Listen(System.Net.IPAddress.Parse(tailscaleIp), 5001,
+            serverOptions.Listen(System.Net.IPAddress.Parse(tailscaleIp!), 5001,
                 listenOptions => ConfigureHttps(listenOptions, certificateThumbprint));
         }
         else
         {
-            if (!string.IsNullOrEmpty(tailscaleIp))
+            if (!string.IsNullOrEmpty(tailscaleIp) && !timedOut)
             {
+                LogStartup(startupLogPath, $"Configured Tailscale IP {tailscaleIp} is not assigned to any local interface. Binding to 0.0.0.0 instead.");
                 Console.WriteLine($"Configured Tailscale IP {tailscaleIp} is not assigned to any local interface. Binding to 0.0.0.0 instead.");
             }
-            else
+            else if (string.IsNullOrEmpty(tailscaleIp))
             {
+                LogStartup(startupLogPath, "No Tailscale IP configured. Binding to 0.0.0.0");
                 Console.WriteLine("No Tailscale IP configured. Binding to 0.0.0.0");
             }
 
@@ -89,7 +146,19 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     }
 });
 
-var app = builder.Build();
+WebApplication app;
+try
+{
+    app = builder.Build();
+    LogStartup(startupLogPath, "Build() succeeded");
+}
+catch (Exception ex)
+{
+    LogStartup(startupLogPath, $"FATAL during Build(): {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+    Console.Error.WriteLine($"FATAL during Build(): {ex.GetType().Name}: {ex.Message}");
+    Environment.Exit(1);
+    return;
+}
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -105,12 +174,14 @@ if (tradeCommandsEnabled)
     app.MapTradeEndpoints();
 }
 
+LogStartup(startupLogPath, "Calling app.Run()");
 try
 {
     app.Run();
 }
 catch (IOException ex) when (ex.Message.Contains("already in use"))
 {
+    LogStartup(startupLogPath, $"FATAL: port already in use: {ex.Message}");
     Console.Error.WriteLine("ERROR: Port 5000/5001 already in use — is another MobileUI.Api instance running?");
     Console.Error.WriteLine($"Details: {ex.Message}");
     Console.Error.WriteLine();
@@ -119,6 +190,7 @@ catch (IOException ex) when (ex.Message.Contains("already in use"))
 }
 catch (Exception ex)
 {
+    LogStartup(startupLogPath, $"FATAL: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
     Console.Error.WriteLine($"FATAL: {ex.GetType().Name}: {ex.Message}");
     Environment.Exit(1);
 }
