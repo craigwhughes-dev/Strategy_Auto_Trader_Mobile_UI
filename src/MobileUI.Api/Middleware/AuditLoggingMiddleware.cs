@@ -46,6 +46,13 @@ public class AuditLoggingMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing request from {SourceIp} {Method} {Path}", sourceIp, method, path);
+
+            if (!string.IsNullOrEmpty(_auditLogPath))
+            {
+                var errorLogPath = Path.Combine(Path.GetDirectoryName(_auditLogPath)!, "errors.log");
+                LogToFile(errorLogPath, $"{timestamp} | {sourceIp} | {method} {path} | {ex}");
+            }
+
             throw;
         }
     }
