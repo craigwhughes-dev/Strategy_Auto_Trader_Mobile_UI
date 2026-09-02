@@ -117,7 +117,7 @@
                                            FontSize="17" FontAttributes="Bold" VerticalOptions="Center"
                                            TextColor="{Binding UnrealizedPnl, Converter={StaticResource PnlColorConverter}}"/>
 
-                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*">
+                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*,*">
                                         <VerticalStackLayout Spacing="2">
                                             <Label Text="Qty" Style="{StaticResource CaptionLabel}"/>
                                             <Label Text="{Binding Quantity, StringFormat='{0:0.####}'}" Style="{StaticResource ValueLabel}"/>
@@ -129,6 +129,10 @@
                                         <VerticalStackLayout Grid.Column="2" Spacing="2">
                                             <Label Text="Current" Style="{StaticResource CaptionLabel}"/>
                                             <Label Text="{Binding CurrentPrice, StringFormat='{0:F2}'}" Style="{StaticResource ValueLabel}"/>
+                                        </VerticalStackLayout>
+                                        <VerticalStackLayout Grid.Column="3" Spacing="2">
+                                            <Label Text="Value" Style="{StaticResource CaptionLabel}"/>
+                                            <Label Text="{Binding CurrentValue, StringFormat='{0:F2}'}" Style="{StaticResource ValueLabel}"/>
                                         </VerticalStackLayout>
                                     </Grid>
 

@@ -38,6 +38,7 @@ public static class PositionsEndpoints
             {
                 var normalizedPrice = NormalizeToPotCurrency(ticker, price);
                 position.CurrentPrice = normalizedPrice;
+                position.CurrentValue = normalizedPrice * position.Quantity;
                 position.UnrealizedPnl = (normalizedPrice - position.FillPrice) * position.Quantity;
             }
 

@@ -13,6 +13,7 @@ public class Position
     public double TargetLevel { get; set; }
     public double KellyFraction { get; set; }
     public double? CurrentPrice { get; set; }
+    public double? CurrentValue { get; set; }
     public double? UnrealizedPnl { get; set; }
 }
 

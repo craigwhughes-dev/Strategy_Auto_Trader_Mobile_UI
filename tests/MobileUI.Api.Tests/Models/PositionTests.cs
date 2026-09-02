@@ -207,6 +207,37 @@ public class PositionTests
         Assert.That(actualPnl, Is.EqualTo(0));
     }
 
+    // BVA: Current value calculation
+    [Test]
+    public void CurrentValue_Calculation_IsCorrect()
+    {
+        _position.Quantity = 100;
+        _position.CurrentPrice = 5.50;
+
+        var expectedValue = 5.50 * 100;
+        var actualValue = _position.CurrentPrice.Value * _position.Quantity;
+
+        Assert.That(actualValue, Is.EqualTo(expectedValue));
+    }
+
+    [Test]
+    public void CurrentValue_WithoutCurrentPrice_IsNull()
+    {
+        _position.CurrentPrice = null;
+        Assert.That(_position.CurrentValue, Is.Null);
+    }
+
+    [Test]
+    public void CurrentValue_WithZeroQuantity_IsZero()
+    {
+        _position.Quantity = 0;
+        _position.CurrentPrice = 5.50;
+
+        var actualValue = _position.CurrentPrice.Value * _position.Quantity;
+
+        Assert.That(actualValue, Is.EqualTo(0));
+    }
+
     // BVA: Entry date boundaries
     [Test]
     public void EntryDate_InPast_IsValid()

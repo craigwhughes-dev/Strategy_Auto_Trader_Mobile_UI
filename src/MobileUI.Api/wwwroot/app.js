@@ -147,7 +147,8 @@ function renderPositions(positions) {
     metricsRow.append(
       metric("Qty", fmtQty(pos.quantity)),
       metric("Entry", Number(pos.fillPrice).toFixed(2)),
-      metric("Current", pos.currentPrice != null ? Number(pos.currentPrice).toFixed(2) : "-")
+      metric("Current", pos.currentPrice != null ? Number(pos.currentPrice).toFixed(2) : "-"),
+      metric("Value", pos.currentValue != null ? Number(pos.currentValue).toFixed(2) : "-")
     );
 
     const sellBtn = document.createElement("button");

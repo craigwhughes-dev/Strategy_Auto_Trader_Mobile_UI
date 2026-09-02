@@ -95,7 +95,47 @@ public class PositionsEndpointsTests
         var updated = ok.Value!.Single(p => p.Ticker == "VOD.L");
 
         Assert.That(updated.CurrentPrice, Is.EqualTo(1.139).Within(0.0001));
+        Assert.That(updated.CurrentValue, Is.EqualTo(1139.0).Within(0.0001));
         Assert.That(updated.UnrealizedPnl, Is.EqualTo(0.0).Within(0.0001));
+    }
+
+    [Test]
+    public async Task GetPositions_CalculatesCurrentValueAsPriceTimesQuantity()
+    {
+        var position = new Position
+        {
+            Ticker = "AAPL",
+            Quantity = 100,
+            FillPrice = 150.00,
+        };
+
+        _statusReader.Positions["AAPL"] = position;
+        _priceFetcher.Prices["AAPL"] = 155.00;
+
+        var result = await InvokeGetPositions(_statusReader, _priceFetcher);
+        var ok = (Ok<List<Position>>)result;
+        var updated = ok.Value!.Single(p => p.Ticker == "AAPL");
+
+        Assert.That(updated.CurrentValue, Is.EqualTo(15500.0).Within(0.0001));
+    }
+
+    [Test]
+    public async Task GetPositions_WithMissingPrice_LeavesCurrentValueNull()
+    {
+        var position = new Position
+        {
+            Ticker = "UNKNOWN",
+            Quantity = 100,
+            FillPrice = 50.00
+        };
+
+        _statusReader.Positions["UNKNOWN"] = position;
+
+        var result = await InvokeGetPositions(_statusReader, _priceFetcher);
+        var ok = (Ok<List<Position>>)result;
+        var updated = ok.Value!.Single(p => p.Ticker == "UNKNOWN");
+
+        Assert.That(updated.CurrentValue, Is.Null);
     }
 
     [Test]
@@ -202,6 +242,7 @@ public class PositionsEndpointsTests
                     ? price / 100.0
                     : price;
                 position.CurrentPrice = normalizedPrice;
+                position.CurrentValue = normalizedPrice * position.Quantity;
                 position.UnrealizedPnl = (normalizedPrice - position.FillPrice) * position.Quantity;
             }
 
