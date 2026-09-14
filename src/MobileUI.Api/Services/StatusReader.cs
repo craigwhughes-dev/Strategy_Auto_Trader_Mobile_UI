@@ -16,6 +16,18 @@ public class StatusReader : IStatusReader
     private const int SchemaVersion = 1;
     private const int StaleHeartbeatThresholdSeconds = 180;
 
+    // File.ReadAllText uses FileShare.Read, which blocks os.replace() on Windows
+    // (the daemon's atomic rename needs FILE_SHARE_DELETE on the target file).
+    // Opening with ReadWrite|Delete lets the daemon rename over the file while
+    // the API holds it open for reading.
+    private static string ReadAllTextNonLocking(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
     public StatusReader(IConfiguration configuration, ILogger<StatusReader> logger)
     {
         _appStatusPath = configuration["DaemonState:AppStatusPath"]
@@ -37,7 +49,7 @@ public class StatusReader : IStatusReader
                 };
             }
 
-            var json = File.ReadAllText(_appStatusPath);
+            var json = ReadAllTextNonLocking(_appStatusPath);
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
@@ -134,7 +146,7 @@ public class StatusReader : IStatusReader
             if (!File.Exists(_appStatusPath))
                 return positions;
 
-            var json = File.ReadAllText(_appStatusPath);
+            var json = ReadAllTextNonLocking(_appStatusPath);
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
