@@ -39,7 +39,6 @@ public static class MauiProgram
 #endif
 
 		var app = builder.Build();
-		ServiceHelper.Init(app.Services);
 		return app;
 	}
 }

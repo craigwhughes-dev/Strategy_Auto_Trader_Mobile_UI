@@ -12,7 +12,7 @@ Android MAUI app + ASP.NET Core API for remotely monitoring and controlling your
 - ✅ C# solution with API, MAUI app, and test projects
 - ✅ API endpoints: `/api/positions`, `/api/health`, `/api/trades/recent`
 - ✅ Services: StatusReader (reads `app_status.json`), JournalReader (CSV parsing), PriceFetcher (Yahoo Finance with GBX→GBP normalization, 60s cache)
-- ✅ MAUI UI: daemon status banner, positions list, recent trades, pull-to-refresh, P&L coloring
+- ✅ MAUI app: thin WebView shell pointing at the API's own web UI (`wwwroot/`) — no native UI to maintain
 - ✅ Tests: 16 passing (StatusReader, JournalReader, PriceFetcher)
 - ✅ LAN deployment: binds to `0.0.0.0:5000` for all interfaces
 - ✅ Ops documentation: Task Scheduler auto-start guide
@@ -36,7 +36,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for full setup, Task Scheduler auto-start, an
 - ✅ Self-signed HTTPS certificate (valid 3 years, thumbprint: 7618F28C90EE396840E9B980773F8A69147E86CC)
 - ✅ API key authentication middleware (checks X-Api-Key header, 401 on missing/invalid)
 - ✅ Audit logging middleware (logs all requests with timestamp, IP, method, path, status)
-- ✅ MAUI certificate pinning (validates server cert thumbprint)
+- ✅ MAUI certificate trust (Android WebView validates server cert thumbprint, same model as the old native `ApiClient`)
 - ✅ Tests: 4 auth middleware tests (missing key, valid key, invalid key, unprotected endpoint)
 - ⏳ Tailscale setup docs (configure on PC + phone, no router port-forwarding needed)
 
@@ -95,15 +95,15 @@ data/journals/live.csv (closed trades)
 **Phase 1: Read-Only API + Android App (Home WiFi)**
 - Full ASP.NET Core Minimal API with Kestrel binding to 0.0.0.0:5000
 - Services: StatusReader (app_status.json), JournalReader (live.csv), PriceFetcher (Yahoo Finance with GBX→GBP, 60s cache)
-- MAUI app: positions list, recent trades, daemon status banner, pull-to-refresh, P&L coloring
-- 16 passing unit tests (StatusReader, JournalReader, PriceFetcher, MAUI integration)
-- LAN deployment guide: PC IP configuration, MAUI ApiClient setup
+- MAUI app: thin WebView shell, points at the API's own `wwwroot/` web UI instead of duplicating it natively
+- 16 passing unit tests (StatusReader, JournalReader, PriceFetcher)
+- LAN deployment guide: PC IP configuration, server URL entered on the app's Settings page
 
 **Phase 2: Secure Remote Access (Tailscale + HTTPS + Auth)**
 - Self-signed HTTPS certificate (valid 3 years, thumbprint: 7618F28C90EE396840E9B980773F8A69147E86CC)
 - API key auth middleware (X-Api-Key header, 401 on invalid/missing)
 - Audit logging middleware (all requests logged with timestamp, IP, method, path, status)
-- MAUI certificate pinning (validates server cert thumbprint before accepting responses)
+- MAUI certificate trust (Android WebView validates server cert thumbprint before accepting responses)
 - 4 passing auth middleware tests
 
 **Phase 3: Sell Orders (C# Backend)**
@@ -142,15 +142,15 @@ src/
     Properties/launchSettings.json (0.0.0.0:5000)
   MobileUI.Maui/
     MauiProgram.cs
-    Services/ApiClient.cs (HttpClient wrapper, configurable base URL)
-    ViewModels/PositionsViewModel.cs (pull-to-refresh, error handling)
-    Views/PositionsPage.xaml (UI layout, bindings)
-    Models/{Position,TradeRecord,DaemonStatus}.cs
+    MainPage.xaml(.cs) (WebView shell, loads api_base_url from Preferences)
+    SettingsPage.xaml / ViewModels/SettingsViewModel.cs (server URL + cert thumbprint config)
+    Platforms/Android/SslTolerantWebViewClient.cs (self-signed cert trust for the WebView)
+    Services/TailscaleDetector.cs
 tests/
   MobileUI.Api.Tests/
     Services/{StatusReaderTests,JournalReaderTests,PriceFetcherTests}.cs
   MobileUI.Maui.Tests/
-    (UI-only tests require platform-specific setup; logic in ViewModels)
+    Services/TailscaleDetectorTests.cs
 ```
 
 ---
@@ -183,10 +183,7 @@ dotnet test tests/MobileUI.Api.Tests/  # Unit tests (16 tests)
 }
 ```
 
-**MAUI server** ([ApiClient.cs](src/MobileUI.Maui/Services/ApiClient.cs)):
-```csharp
-private string _baseUrl = "http://192.168.1.100:5000";  // Your PC's LAN IP
-```
+**MAUI server**: set on the app's Settings tab (API URL + certificate thumbprint), stored in `Preferences` under `api_base_url` / `api_cert_thumbprint`. No rebuild needed to point the app at a different server.
 
 ---
 
@@ -200,12 +197,10 @@ private string _baseUrl = "http://192.168.1.100:5000";  // Your PC's LAN IP
    - Write result to `results/{id}.json` (status: filled/error, fill_price, or error_message)
    - Test: verify a paper sell from MAUI fills in TWS + `execution_state.json`
 
-2. **MAUI Sell UI** — In this repo:
-   - Position row "Sell" button → confirmation dialog (ticker, qty, estimated value, market status)
-   - If market closed: "Will execute at next open: HH:MM UTC" message
-   - POST /sell → poll GET /commands/{id} until status != pending
-   - Toast with fill price or error
-   - Pending commands section: list all commands with status, cancel buttons
+2. **Sell UI** — ✅ done, lives in the web UI (`wwwroot/app.js`), which the MAUI app now just displays via WebView:
+   - Position row "Sell Position" / "Sell All" buttons, pause/resume buying
+   - POST /sell(-all) → polls GET /commands/{id} until status != pending
+   - Pending commands section with cancel buttons
 
 3. **e2e Testing** (paper orders only):
    - Verify a sell from the phone → appears in `/api/trades/commands` → executes → appears in `/api/trades/recent`
