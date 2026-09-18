@@ -24,17 +24,6 @@
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="6">
-                        <Label Text="API KEY" Style="{StaticResource CaptionLabel}" FontAttributes="Bold"/>
-                        <Border Style="{StaticResource FieldFrame}">
-                            <Entry x:Name="ApiKeyEntry"
-                                   Style="{StaticResource SettingsEntry}"
-                                   Placeholder="Enter your API key"
-                                   Text="{Binding ApiKey}"
-                                   IsPassword="True"/>
-                        </Border>
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="6">
                         <Label Text="CERTIFICATE THUMBPRINT" Style="{StaticResource CaptionLabel}" FontAttributes="Bold"/>
                         <Border Style="{StaticResource FieldFrame}">
                             <Entry x:Name="ThumbprintEntry"
@@ -77,8 +66,8 @@
                     <Label Text="0.  Make sure Tailscale is running and connected on this phone" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
                     <Label Text="1.  On your PC, run: tailscale ip -4" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
                     <Label Text="2.  Use that IP in the API URL (https://[IP]:5001)" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
-                    <Label Text="3.  API Key: from generate-api-key.ps1 output" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
-                    <Label Text="4.  Thumbprint: from generate-certificate.ps1 output" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
+                    <Label Text="3.  Thumbprint: from generate-certificate.ps1 output" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
+                    <Label Text="4.  The API key itself is entered on the web page (gear icon), not here" Style="{StaticResource CaptionLabel}" FontSize="12" LineBreakMode="WordWrap"/>
                 </VerticalStackLayout>
             </Border>
 

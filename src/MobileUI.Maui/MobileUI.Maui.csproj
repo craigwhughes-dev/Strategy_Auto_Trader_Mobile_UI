@@ -68,16 +68,10 @@
 	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
 		<Compile Remove="Platforms\**\*.cs" />
 		<Compile Remove="**\*.xaml.cs" />
-		<Compile Remove="Converters\**\*.cs" />
 		<Compile Remove="MauiProgram.cs" />
 		<Compile Remove="App.xaml.cs" />
 		<Compile Remove="ViewModels\SettingsViewModel.cs" />
-		<Compile Remove="Services\ApiClient.cs" />
 		<None Remove="**\*.xaml" />
-	</ItemGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
-		<Compile Remove="Stubs\**\*.cs" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">

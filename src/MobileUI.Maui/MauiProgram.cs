@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using StrategyTradingAppUI.Maui.Services;
+using Microsoft.Maui.Handlers;
 using StrategyTradingAppUI.Maui.ViewModels;
 
 namespace StrategyTradingAppUI.Maui;
@@ -17,9 +17,19 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		builder.Services.AddSingleton<ApiClient>();
-		builder.Services.AddSingleton<IApiClient>(sp => sp.GetRequiredService<ApiClient>());
-		builder.Services.AddSingleton<PositionsViewModel>();
+#if ANDROID
+		WebViewHandler.Mapper.AppendToMapping("SslTolerant", (handler, view) =>
+		{
+			if (handler.PlatformView is Android.Webkit.WebView androidWebView)
+			{
+				androidWebView.SetWebViewClient(new SslTolerantWebViewClient());
+				// Live trading status must always reflect the server, never a stale cached response.
+				androidWebView.Settings.CacheMode = Android.Webkit.CacheModes.NoCache;
+				androidWebView.ClearCache(true);
+			}
+		});
+#endif
+
 		builder.Services.AddSingleton<SettingsViewModel>();
 		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddSingleton<SettingsPage>();
