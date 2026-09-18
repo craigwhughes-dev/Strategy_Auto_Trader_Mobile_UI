@@ -131,13 +131,13 @@ public class StatusReader : IStatusReader
                 {
                     var tierStatus = new TierAllocationStatus();
 
-                    if (tierAlloc.TryGetProperty("vix_current", out var vix))
+                    if (tierAlloc.TryGetProperty("vix_current", out var vix) && vix.ValueKind != JsonValueKind.Null)
                         tierStatus.VixCurrent = vix.GetDouble();
 
-                    if (tierAlloc.TryGetProperty("vxn_current", out var vxn))
+                    if (tierAlloc.TryGetProperty("vxn_current", out var vxn) && vxn.ValueKind != JsonValueKind.Null)
                         tierStatus.VxnCurrent = vxn.GetDouble();
 
-                    if (tierAlloc.TryGetProperty("selected_tier_num", out var selectedTier))
+                    if (tierAlloc.TryGetProperty("selected_tier_num", out var selectedTier) && selectedTier.ValueKind != JsonValueKind.Null)
                         tierStatus.SelectedTierNum = selectedTier.GetInt32();
 
                     if (tierAlloc.TryGetProperty("selected_asset", out var selectedAsset))
@@ -146,7 +146,7 @@ public class StatusReader : IStatusReader
                     if (tierAlloc.TryGetProperty("action", out var action))
                         tierStatus.Action = action.GetString();
 
-                    if (tierAlloc.TryGetProperty("tiers", out var tiersArray))
+                    if (tierAlloc.TryGetProperty("tiers", out var tiersArray) && tiersArray.ValueKind == JsonValueKind.Array)
                     {
                         foreach (var tierEl in tiersArray.EnumerateArray())
                         {
