@@ -77,6 +77,7 @@ public class StatusReader : IStatusReader
                 DryRun = root.GetProperty("dry_run").GetBoolean(),
                 HaltNewEntries = root.GetProperty("halt_new_entries").GetBoolean(),
                 PausedByUser = root.TryGetProperty("paused_by_user", out var pausedByUser) && pausedByUser.GetBoolean(),
+                TierMode = root.TryGetProperty("tier_mode", out var tierMode) && tierMode.GetBoolean(),
                 LastReconcileDate = root.GetProperty("last_reconcile_date").GetString(),
             };
 
@@ -121,6 +122,54 @@ public class StatusReader : IStatusReader
                             ? hour.GetInt32()
                             : -1,
                     };
+                }
+            }
+
+            if (root.TryGetProperty("allocation", out var allocation) && allocation.ValueKind != JsonValueKind.Null)
+            {
+                if (allocation.TryGetProperty("tier_allocation", out var tierAlloc) && tierAlloc.ValueKind != JsonValueKind.Null)
+                {
+                    var tierStatus = new TierAllocationStatus();
+
+                    if (tierAlloc.TryGetProperty("vix_current", out var vix))
+                        tierStatus.VixCurrent = vix.GetDouble();
+
+                    if (tierAlloc.TryGetProperty("vxn_current", out var vxn))
+                        tierStatus.VxnCurrent = vxn.GetDouble();
+
+                    if (tierAlloc.TryGetProperty("selected_tier_num", out var selectedTier))
+                        tierStatus.SelectedTierNum = selectedTier.GetInt32();
+
+                    if (tierAlloc.TryGetProperty("selected_asset", out var selectedAsset))
+                        tierStatus.SelectedAsset = selectedAsset.GetString();
+
+                    if (tierAlloc.TryGetProperty("action", out var action))
+                        tierStatus.Action = action.GetString();
+
+                    if (tierAlloc.TryGetProperty("tiers", out var tiersArray))
+                    {
+                        foreach (var tierEl in tiersArray.EnumerateArray())
+                        {
+                            var tier = new TierInfo
+                            {
+                                TierNum = tierEl.TryGetProperty("tier_num", out var tn) ? tn.GetInt32() : 0,
+                                Asset = tierEl.TryGetProperty("asset", out var ast) ? ast.GetString() ?? "" : "",
+                                Label = tierEl.TryGetProperty("label", out var lbl) ? lbl.GetString() ?? "" : "",
+                                Index = tierEl.TryGetProperty("index", out var idx) ? idx.GetString() ?? "" : "",
+                                Passes = tierEl.TryGetProperty("passes", out var p) && p.GetBoolean(),
+                            };
+
+                            if (tierEl.TryGetProperty("gate_value", out var gv) && gv.ValueKind != JsonValueKind.Null)
+                                tier.GateValue = gv.GetDouble();
+
+                            if (tierEl.TryGetProperty("current_value", out var cv) && cv.ValueKind != JsonValueKind.Null)
+                                tier.CurrentValue = cv.GetDouble();
+
+                            tierStatus.Tiers.Add(tier);
+                        }
+                    }
+
+                    status.TierAllocation = tierStatus;
                 }
             }
 

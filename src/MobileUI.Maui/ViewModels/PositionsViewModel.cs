@@ -21,7 +21,21 @@ public class PositionsViewModel : BindableObject
     private int? _heartbeatAgeSeconds;
     private bool _isSellInFlight;
     private bool _isPauseInFlight;
+    private bool _tierMode;
     private DaemonStatus? _lastHealth;
+    private TierAllocationStatus? _tierAllocation;
+
+    public bool TierMode
+    {
+        get => _tierMode;
+        set { _tierMode = value; OnPropertyChanged(); }
+    }
+
+    public TierAllocationStatus? TierAllocation
+    {
+        get => _tierAllocation;
+        set { _tierAllocation = value; OnPropertyChanged(); }
+    }
 
     public bool IsLoading
     {
@@ -166,6 +180,8 @@ public class PositionsViewModel : BindableObject
                 HaltNewEntries = health.HaltNewEntries;
                 PausedByUser = health.PausedByUser;
                 HeartbeatAgeSeconds = health.HeartbeatAgeSeconds;
+                TierMode = health.TierMode;
+                TierAllocation = health.TierAllocation;
             });
         }
         catch (Exception ex)

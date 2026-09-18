@@ -55,6 +55,65 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <!-- Tier allocation section (tier mode only) -->
+                <VerticalStackLayout IsVisible="{Binding TierMode}">
+                    <Label Text="TIER ALLOCATION" Style="{StaticResource SectionHeader}"/>
+                    <Border Style="{StaticResource Card}">
+                        <VerticalStackLayout Spacing="12">
+                            <!-- VIX/VXN values -->
+                            <HorizontalStackLayout Spacing="20">
+                                <Label Text="{Binding TierAllocation.VixCurrent, StringFormat='VIX: {0:F2}'}"
+                                       IsVisible="{Binding TierAllocation.VixCurrent, Converter={StaticResource NotNullToBoolConverter}}"
+                                       FontSize="13" FontAttributes="Bold"/>
+                                <Label Text="{Binding TierAllocation.VxnCurrent, StringFormat='VXN: {0:F2}'}"
+                                       IsVisible="{Binding TierAllocation.VxnCurrent, Converter={StaticResource NotNullToBoolConverter}}"
+                                       FontSize="13" FontAttributes="Bold"/>
+                            </HorizontalStackLayout>
+
+                            <!-- Selected asset and action -->
+                            <HorizontalStackLayout Spacing="20" IsVisible="{Binding TierAllocation.SelectedAsset, Converter={StaticResource NotNullToBoolConverter}}">
+                                <Label Text="{Binding TierAllocation.SelectedAsset, StringFormat='Selected: {0}'}"
+                                       FontSize="12"
+                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"/>
+                                <Label Text="{Binding TierAllocation.Action, StringFormat='Action: {0}'}"
+                                       IsVisible="{Binding TierAllocation.Action, Converter={StaticResource NotNullToBoolConverter}}"
+                                       FontSize="12" FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource AccentDark}}"/>
+                            </HorizontalStackLayout>
+
+                            <!-- Tiers list -->
+                            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding TierAllocation.Tiers}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource Card}" Padding="12,10">
+                                            <Grid RowDefinitions="Auto" ColumnDefinitions="60,70,*,Auto">
+                                                <Label Grid.Column="0" Text="{Binding TierNum, StringFormat='Tier {0}'}"
+                                                       FontSize="12" FontAttributes="Bold"/>
+                                                <Label Grid.Column="1" Text="{Binding Asset}"
+                                                       FontSize="12" FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Accent}, Dark={StaticResource AccentDark}}"/>
+                                                <VerticalStackLayout Grid.Column="2" Spacing="2" Padding="0,0,12,0">
+                                                    <Label Text="{Binding Label}" FontSize="11"
+                                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"/>
+                                                    <Label Text="{Binding Index, StringFormat='{0}', Converter={StaticResource GateValueConverter}}"
+                                                           FontSize="11"
+                                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                                           IsVisible="{Binding Index, Converter={StaticResource NotEqualConverter}, ConverterParameter='none'}"/>
+                                                </VerticalStackLayout>
+                                                <Label Grid.Column="3"
+                                                       Text="{Binding Passes, StringFormat='{0}'}"
+                                                       FontSize="11" FontAttributes="Bold"
+                                                       HorizontalOptions="End"
+                                                       TextColor="{Binding Passes, Converter={StaticResource PassFailColorConverter}}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
                 <!-- Positions section with Sell All button -->
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <Label Text="OPEN POSITIONS" Style="{StaticResource SectionHeader}" VerticalOptions="Center"/>

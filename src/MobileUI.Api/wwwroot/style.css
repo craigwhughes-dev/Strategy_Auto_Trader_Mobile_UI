@@ -286,3 +286,123 @@ body {
 }
 
 .toast.error { background: var(--loss); }
+
+/* Tier allocation styles */
+#tierAllocationSection {
+  margin-bottom: 8px;
+}
+
+.tier-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tier-vix-row {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.tier-vix-row span {
+  flex: 1;
+}
+
+.tier-selected-row {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tier-selected-row span {
+  flex: 1;
+}
+
+.tier-action {
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.tiers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tier-item {
+  display: grid;
+  grid-template-columns: 60px 70px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: var(--page-bg);
+  font-size: 12px;
+}
+
+.tier-item.pass {
+  border-color: var(--profit);
+  background: rgba(22, 163, 74, 0.08);
+}
+
+.tier-item.fail {
+  border-color: var(--loss);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+.tier-item.selected {
+  border-width: 2px;
+}
+
+.tier-num {
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.tier-asset {
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.tier-label {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.tier-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.tier-gate {
+  color: var(--text-primary);
+}
+
+.tier-fallback {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.tier-status {
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: center;
+  min-width: 60px;
+}
+
+.tier-status.pass {
+  background: rgba(22, 163, 74, 0.2);
+  color: var(--profit);
+}
+
+.tier-status.fail {
+  background: rgba(220, 38, 38, 0.2);
+  color: var(--loss);
+}

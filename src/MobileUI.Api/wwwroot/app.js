@@ -61,6 +61,103 @@ function showToast(message, isError) {
 
 // ---- Rendering ----
 
+function renderTierAllocation(tierAlloc, tierMode) {
+  const section = el("tierAllocationSection");
+  const card = el("tierAllocationCard");
+  clear(card);
+
+  if (!tierMode || !tierAlloc) {
+    section.classList.add("hidden");
+    return;
+  }
+
+  section.classList.remove("hidden");
+
+  // Header with VIX/VXN
+  const header = document.createElement("div");
+  header.className = "tier-header";
+
+  const vixLabel = document.createElement("div");
+  vixLabel.className = "tier-vix-row";
+  if (tierAlloc.vixCurrent !== null) {
+    const vixEl = document.createElement("span");
+    vixEl.textContent = `VIX: ${Number(tierAlloc.vixCurrent).toFixed(2)}`;
+    vixLabel.appendChild(vixEl);
+  }
+  if (tierAlloc.vxnCurrent !== null) {
+    const vxnEl = document.createElement("span");
+    vxnEl.textContent = `VXN: ${Number(tierAlloc.vxnCurrent).toFixed(2)}`;
+    vixLabel.appendChild(vxnEl);
+  }
+  header.appendChild(vixLabel);
+
+  if (tierAlloc.selectedAsset || tierAlloc.action) {
+    const selectedRow = document.createElement("div");
+    selectedRow.className = "tier-selected-row";
+    if (tierAlloc.selectedAsset) {
+      const asset = document.createElement("span");
+      asset.textContent = `Selected: ${tierAlloc.selectedAsset}`;
+      selectedRow.appendChild(asset);
+    }
+    if (tierAlloc.action) {
+      const action = document.createElement("span");
+      action.className = "tier-action";
+      action.textContent = `Action: ${tierAlloc.action}`;
+      selectedRow.appendChild(action);
+    }
+    header.appendChild(selectedRow);
+  }
+
+  card.appendChild(header);
+
+  // Tiers list
+  if (tierAlloc.tiers && tierAlloc.tiers.length > 0) {
+    const tiersList = document.createElement("div");
+    tiersList.className = "tiers-list";
+
+    for (const tier of tierAlloc.tiers) {
+      const tierEl = document.createElement("div");
+      tierEl.className = `tier-item ${tier.passes ? "pass" : "fail"} ${tierAlloc.selectedTierNum === tier.tierNum ? "selected" : ""}`;
+
+      const tierNum = document.createElement("span");
+      tierNum.className = "tier-num";
+      tierNum.textContent = `Tier ${tier.tierNum}`;
+
+      const tierAsset = document.createElement("span");
+      tierAsset.className = "tier-asset";
+      tierAsset.textContent = tier.asset;
+
+      const tierLabel = document.createElement("span");
+      tierLabel.className = "tier-label";
+      tierLabel.textContent = tier.label;
+
+      const tierInfo = document.createElement("div");
+      tierInfo.className = "tier-info";
+
+      if (tier.gateValue !== null && tier.currentValue !== null) {
+        const gateStr = document.createElement("span");
+        gateStr.className = "tier-gate";
+        gateStr.textContent = `${tier.index}=${Number(tier.currentValue).toFixed(2)} vs ${Number(tier.gateValue).toFixed(2)}`;
+        tierInfo.appendChild(gateStr);
+      } else if (tier.index === "none") {
+        const fallback = document.createElement("span");
+        fallback.className = "tier-fallback";
+        fallback.textContent = "Always available";
+        tierInfo.appendChild(fallback);
+      }
+
+      const tierStatus = document.createElement("span");
+      tierStatus.className = `tier-status ${tier.passes ? "pass" : "fail"}`;
+      tierStatus.textContent = tier.passes ? "✓ PASS" : "✗ FAIL";
+
+      tierEl.append(tierNum, tierAsset, tierLabel, tierInfo, tierStatus);
+      tiersList.appendChild(tierEl);
+    }
+
+    card.appendChild(tiersList);
+  }
+}
+
 function renderHealth(health) {
   const dot = el("statusDot");
   const text = el("statusText");
@@ -254,6 +351,7 @@ async function refreshAll() {
       apiGet("/api/trades/commands").catch(() => []),
     ]);
     renderHealth(health);
+    renderTierAllocation(health.tierAllocation, health.tierMode);
     renderPositions(positions);
     renderTrades(trades);
     renderCommands(commands);
