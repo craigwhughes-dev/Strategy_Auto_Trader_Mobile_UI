@@ -310,6 +310,36 @@ body {
   flex: 1;
 }
 
+.vvix-row {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.vvix-row .caption {
+  font-weight: normal;
+}
+
+.vvix-row.vvix-calm {
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--profit);
+}
+
+.vvix-row.vvix-stressed {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--loss);
+}
+
+.vvix-row.vvix-base {
+  background: var(--pill-bg);
+  color: var(--text-primary);
+}
+
 .tier-selected-row {
   display: flex;
   gap: 20px;

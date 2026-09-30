@@ -137,6 +137,40 @@ public class StatusReader : IStatusReader
                     if (tierAlloc.TryGetProperty("vxn_current", out var vxn) && vxn.ValueKind != JsonValueKind.Null)
                         tierStatus.VxnCurrent = vxn.GetDouble();
 
+                    if (tierAlloc.TryGetProperty("vvix_band", out var vvixBand) && vvixBand.ValueKind != JsonValueKind.Null)
+                        tierStatus.VvixBand = vvixBand.GetString();
+
+                    if (tierAlloc.TryGetProperty("vvix", out var vvixEl) && vvixEl.ValueKind != JsonValueKind.Null)
+                    {
+                        var vvix = new VvixStatus();
+
+                        if (vvixEl.TryGetProperty("current", out var vCur) && vCur.ValueKind != JsonValueKind.Null)
+                            vvix.Current = vCur.GetDouble();
+
+                        if (vvixEl.TryGetProperty("band", out var vBand) && vBand.ValueKind != JsonValueKind.Null)
+                            vvix.Band = vBand.GetString();
+
+                        vvix.CalmStreakDays = vvixEl.TryGetProperty("calm_streak_days", out var calmDays)
+                            ? calmDays.GetInt32() : 0;
+
+                        vvix.StressedStreakDays = vvixEl.TryGetProperty("stressed_streak_days", out var stressedDays)
+                            ? stressedDays.GetInt32() : 0;
+
+                        if (vvixEl.TryGetProperty("confirm_days", out var confirmDays) && confirmDays.ValueKind != JsonValueKind.Null)
+                            vvix.ConfirmDays = confirmDays.GetDouble();
+
+                        if (vvixEl.TryGetProperty("edge_low", out var edgeLow) && edgeLow.ValueKind != JsonValueKind.Null)
+                            vvix.EdgeLow = edgeLow.GetDouble();
+
+                        if (vvixEl.TryGetProperty("edge_high", out var edgeHigh) && edgeHigh.ValueKind != JsonValueKind.Null)
+                            vvix.EdgeHigh = edgeHigh.GetDouble();
+
+                        if (vvixEl.TryGetProperty("last_date", out var lastDate) && lastDate.ValueKind != JsonValueKind.Null)
+                            vvix.LastDate = lastDate.GetString();
+
+                        tierStatus.Vvix = vvix;
+                    }
+
                     if (tierAlloc.TryGetProperty("selected_tier_num", out var selectedTier) && selectedTier.ValueKind != JsonValueKind.Null)
                         tierStatus.SelectedTierNum = selectedTier.GetInt32();
 
@@ -161,6 +195,12 @@ public class StatusReader : IStatusReader
 
                             if (tierEl.TryGetProperty("gate_value", out var gv) && gv.ValueKind != JsonValueKind.Null)
                                 tier.GateValue = gv.GetDouble();
+
+                            if (tierEl.TryGetProperty("enter_gate_value", out var egv) && egv.ValueKind != JsonValueKind.Null)
+                                tier.EnterGateValue = egv.GetDouble();
+
+                            if (tierEl.TryGetProperty("exit_gate_value", out var xgv) && xgv.ValueKind != JsonValueKind.Null)
+                                tier.ExitGateValue = xgv.GetDouble();
 
                             if (tierEl.TryGetProperty("current_value", out var cv) && cv.ValueKind != JsonValueKind.Null)
                                 tier.CurrentValue = cv.GetDouble();

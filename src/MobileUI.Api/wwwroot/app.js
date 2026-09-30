@@ -91,6 +91,33 @@ function renderTierAllocation(tierAlloc, tierMode) {
   }
   header.appendChild(vixLabel);
 
+  const vvix = tierAlloc.vvix;
+  if (vvix) {
+    const vvixRow = document.createElement("div");
+    vvixRow.className = `vvix-row vvix-${vvix.band || "base"}`;
+
+    const vvixMain = document.createElement("span");
+    const vvixVal = vvix.current !== null && vvix.current !== undefined
+      ? Number(vvix.current).toFixed(2) : "-";
+    vvixMain.textContent = `VVIX: ${vvixVal} [${(vvix.band || "base").toUpperCase()}]`;
+    vvixRow.appendChild(vvixMain);
+
+    const vvixStreak = document.createElement("span");
+    vvixStreak.className = "caption";
+    const confirmDays = vvix.confirmDays ?? "?";
+    vvixStreak.textContent = `calm ${vvix.calmStreakDays}/${confirmDays}d, stressed ${vvix.stressedStreakDays}/${confirmDays}d`;
+    vvixRow.appendChild(vvixStreak);
+
+    if (vvix.edgeLow !== null && vvix.edgeLow !== undefined && vvix.edgeHigh !== null && vvix.edgeHigh !== undefined) {
+      const vvixEdges = document.createElement("span");
+      vvixEdges.className = "caption";
+      vvixEdges.textContent = `edges ${Number(vvix.edgeLow).toFixed(0)}/${Number(vvix.edgeHigh).toFixed(0)}`;
+      vvixRow.appendChild(vvixEdges);
+    }
+
+    header.appendChild(vvixRow);
+  }
+
   if (tierAlloc.selectedAsset || tierAlloc.action) {
     const selectedRow = document.createElement("div");
     selectedRow.className = "tier-selected-row";
@@ -137,7 +164,12 @@ function renderTierAllocation(tierAlloc, tierMode) {
       if (tier.gateValue !== null && tier.currentValue !== null) {
         const gateStr = document.createElement("span");
         gateStr.className = "tier-gate";
-        gateStr.textContent = `${tier.index}=${Number(tier.currentValue).toFixed(2)} vs ${Number(tier.gateValue).toFixed(2)}`;
+        const hasRange = tier.enterGateValue !== null && tier.enterGateValue !== undefined
+          && tier.exitGateValue !== null && tier.exitGateValue !== undefined;
+        const gateDesc = hasRange
+          ? `enter<=${Number(tier.enterGateValue).toFixed(2)}, hold until >${Number(tier.exitGateValue).toFixed(2)}`
+          : `vs ${Number(tier.gateValue).toFixed(2)}`;
+        gateStr.textContent = `${tier.index}=${Number(tier.currentValue).toFixed(2)} ${gateDesc}`;
         tierInfo.appendChild(gateStr);
       } else if (tier.index === "none") {
         const fallback = document.createElement("span");

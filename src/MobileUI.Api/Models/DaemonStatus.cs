@@ -33,10 +33,12 @@ public class TierAllocationStatus
 {
     public double? VixCurrent { get; set; }
     public double? VxnCurrent { get; set; }
+    public string? VvixBand { get; set; }
     public List<TierInfo> Tiers { get; set; } = new();
     public int? SelectedTierNum { get; set; }
     public string? SelectedAsset { get; set; }
     public string? Action { get; set; }
+    public VvixStatus? Vvix { get; set; }
 }
 
 public class TierInfo
@@ -46,6 +48,20 @@ public class TierInfo
     public string Label { get; set; } = string.Empty;
     public string Index { get; set; } = string.Empty;
     public double? GateValue { get; set; }
+    public double? EnterGateValue { get; set; }
+    public double? ExitGateValue { get; set; }
     public double? CurrentValue { get; set; }
     public bool Passes { get; set; }
+}
+
+public class VvixStatus
+{
+    public double? Current { get; set; }
+    public string? Band { get; set; }
+    public int CalmStreakDays { get; set; }
+    public int StressedStreakDays { get; set; }
+    public double? ConfirmDays { get; set; }
+    public double? EdgeLow { get; set; }
+    public double? EdgeHigh { get; set; }
+    public string? LastDate { get; set; }
 }
