@@ -64,4 +64,18 @@ public class VvixStatus
     public double? EdgeLow { get; set; }
     public double? EdgeHigh { get; set; }
     public string? LastDate { get; set; }
+    public VxnThresholds? VxnThresholds { get; set; }
+}
+
+public class VxnThresholds
+{
+    public VxnPair? Calm { get; set; }
+    public VxnPair? Base { get; set; }
+    public VxnPair? Stressed { get; set; }
+}
+
+public class VxnPair
+{
+    public double Enter { get; set; }
+    public double Exit { get; set; }
 }

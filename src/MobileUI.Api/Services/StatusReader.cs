@@ -168,6 +168,27 @@ public class StatusReader : IStatusReader
                         if (vvixEl.TryGetProperty("last_date", out var lastDate) && lastDate.ValueKind != JsonValueKind.Null)
                             vvix.LastDate = lastDate.GetString();
 
+                        if (vvixEl.TryGetProperty("vxn_thresholds", out var thresholdsEl) && thresholdsEl.ValueKind != JsonValueKind.Null)
+                        {
+                            static VxnPair? ReadPair(JsonElement parent, string name)
+                            {
+                                if (!parent.TryGetProperty(name, out var pairEl) || pairEl.ValueKind == JsonValueKind.Null)
+                                    return null;
+                                return new VxnPair
+                                {
+                                    Enter = pairEl.GetProperty("enter").GetDouble(),
+                                    Exit = pairEl.GetProperty("exit").GetDouble(),
+                                };
+                            }
+
+                            vvix.VxnThresholds = new VxnThresholds
+                            {
+                                Calm = ReadPair(thresholdsEl, "calm"),
+                                Base = ReadPair(thresholdsEl, "base"),
+                                Stressed = ReadPair(thresholdsEl, "stressed"),
+                            };
+                        }
+
                         tierStatus.Vvix = vvix;
                     }
 

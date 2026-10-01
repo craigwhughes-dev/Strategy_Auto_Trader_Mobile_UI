@@ -281,4 +281,64 @@ public class StatusReaderTests
 
         File.Delete(testFile);
     }
+
+    [Test]
+    public void ReadStatus_ParsesVxnThresholdsForAllThreeBands()
+    {
+        var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
+        var recentHeartbeat = DateTime.UtcNow.ToString("O");
+        var json = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{recentHeartbeat}"",
+  ""daemon_pid"": 123,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{}},
+  ""positions"": {{}},
+  ""allocation"": {{
+    ""tier_allocation"": {{
+      ""vix_current"": 16.8,
+      ""vxn_current"": 22.64,
+      ""vvix_band"": ""base"",
+      ""tiers"": [],
+      ""selected_tier_num"": 1,
+      ""selected_asset"": ""EQGB.L"",
+      ""action"": ""HOLD"",
+      ""vvix"": {{
+        ""current"": 88.82,
+        ""band"": ""base"",
+        ""calm_streak_days"": 0,
+        ""stressed_streak_days"": 0,
+        ""confirm_days"": 3.0,
+        ""edge_low"": 76.0,
+        ""edge_high"": 122.0,
+        ""last_date"": ""2026-10-01"",
+        ""vxn_thresholds"": {{
+          ""calm"": {{""enter"": 25.0, ""exit"": 26.0}},
+          ""base"": {{""enter"": 23.0, ""exit"": 24.0}},
+          ""stressed"": {{""enter"": 21.0, ""exit"": 22.0}}
+        }}
+      }}
+    }}
+  }}
+}}";
+
+        File.WriteAllText(testFile, json);
+
+        var status = _reader.ReadStatus();
+
+        var thresholds = status.TierAllocation?.Vvix?.VxnThresholds;
+        Assert.That(thresholds, Is.Not.Null);
+        Assert.That(thresholds!.Calm!.Enter, Is.EqualTo(25.0));
+        Assert.That(thresholds.Calm!.Exit, Is.EqualTo(26.0));
+        Assert.That(thresholds.Base!.Enter, Is.EqualTo(23.0));
+        Assert.That(thresholds.Base!.Exit, Is.EqualTo(24.0));
+        Assert.That(thresholds.Stressed!.Enter, Is.EqualTo(21.0));
+        Assert.That(thresholds.Stressed!.Exit, Is.EqualTo(22.0));
+
+        File.Delete(testFile);
+    }
 }

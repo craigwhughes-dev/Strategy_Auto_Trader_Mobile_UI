@@ -116,6 +116,21 @@ function renderTierAllocation(tierAlloc, tierMode) {
     }
 
     header.appendChild(vvixRow);
+
+    if (vvix.vxnThresholds) {
+      const thresholdsRow = document.createElement("div");
+      thresholdsRow.className = "caption vvix-thresholds";
+      const activeBand = vvix.band || "base";
+      const parts = ["calm", "base", "stressed"]
+        .filter((band) => vvix.vxnThresholds[band])
+        .map((band) => {
+          const pair = vvix.vxnThresholds[band];
+          const str = `${band} ${pair.enter}/${pair.exit}`;
+          return band === activeBand ? `[${str}]` : str;
+        });
+      thresholdsRow.textContent = `VXN gate: ${parts.join("  ")}`;
+      header.appendChild(thresholdsRow);
+    }
   }
 
   if (tierAlloc.selectedAsset || tierAlloc.action) {
