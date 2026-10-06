@@ -79,6 +79,28 @@ public class CommandManagerTests
     }
 
     [Test]
+    public async Task CreateSellAllCommandAsync_QueuesPauseBuyingBeforeSellAll()
+    {
+        await _manager.CreateSellAllCommandAsync();
+
+        var pending = await _manager.GetPendingCommandsAsync();
+        Assert.That(pending.Count, Is.EqualTo(2));
+        Assert.That(pending.Single(c => c.Action == "PAUSE_BUYING").RequestedAtUtc,
+            Is.LessThanOrEqualTo(pending.Single(c => c.Action == "SELL_ALL").RequestedAtUtc));
+    }
+
+    [Test]
+    public async Task CreateSellAllCommandAsync_SecondPressDoesNotDuplicatePause()
+    {
+        await _manager.CreateSellAllCommandAsync();
+        await _manager.CreateSellAllCommandAsync();
+
+        var pending = await _manager.GetPendingCommandsAsync();
+        Assert.That(pending.Count(c => c.Action == "PAUSE_BUYING"), Is.EqualTo(1));
+        Assert.That(pending.Count(c => c.Action == "SELL_ALL"), Is.EqualTo(2));
+    }
+
+    [Test]
     public async Task CreateSellCommandAsync_SetsExpiryToFourHours()
     {
         var beforeCreation = DateTime.UtcNow;
@@ -105,7 +127,8 @@ public class CommandManagerTests
 
         var pending = await _manager.GetPendingCommandsAsync();
 
-        Assert.That(pending.Count, Is.EqualTo(2));
+        // SELL_ALL queues a PAUSE_BUYING ahead of itself, so: pause, sell all, sell MSFT
+        Assert.That(pending.Count, Is.EqualTo(3));
         Assert.That(pending.Any(c => c.Id == id1), Is.True);
         Assert.That(pending.Any(c => c.Id == id2), Is.True);
     }

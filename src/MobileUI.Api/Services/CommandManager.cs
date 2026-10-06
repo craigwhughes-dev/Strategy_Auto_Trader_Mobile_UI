@@ -60,6 +60,18 @@ public class CommandManager : ICommandManager
 
     public async Task<string> CreateSellAllCommandAsync()
     {
+        // Pause first, as manual_control flatten does: the allocator re-buys tier holdings on its next
+        // cycle otherwise. An already-pending pause is left alone, so a second press does not fail.
+        var pendingCommands = await GetPendingCommandsAsync();
+        if (!pendingCommands.Any(c => c.Action == "PAUSE_BUYING" && (c.Status == "pending" || c.Status == "queued_for_open")))
+        {
+            await WriteCommandAsync(new TradeCommand
+            {
+                Action = "PAUSE_BUYING",
+                ExpiresAtUtc = DateTime.UtcNow.AddHours(4)
+            });
+        }
+
         var command = new TradeCommand
         {
             Action = "SELL_ALL",
