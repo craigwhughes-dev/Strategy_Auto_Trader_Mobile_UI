@@ -201,6 +201,11 @@ public class StatusReader : IStatusReader
                     if (tierAlloc.TryGetProperty("action", out var action))
                         tierStatus.Action = action.GetString();
 
+                    if (tierAlloc.TryGetProperty("as_of_date", out var asOfDate) && asOfDate.ValueKind != JsonValueKind.Null)
+                        tierStatus.AsOfDate = asOfDate.GetString();
+
+                    tierStatus.Stale = tierAlloc.TryGetProperty("stale", out var stale) && stale.GetBoolean();
+
                     if (tierAlloc.TryGetProperty("tiers", out var tiersArray) && tiersArray.ValueKind == JsonValueKind.Array)
                     {
                         foreach (var tierEl in tiersArray.EnumerateArray())

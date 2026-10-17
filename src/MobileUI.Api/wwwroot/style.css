@@ -340,6 +340,17 @@ body {
   color: var(--text-primary);
 }
 
+.tier-stale-banner {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 6px;
+  width: fit-content;
+  margin-bottom: 8px;
+  background: rgba(217, 119, 6, 0.12);
+  color: #D97706;
+}
+
 .tier-selected-row {
   display: flex;
   gap: 20px;

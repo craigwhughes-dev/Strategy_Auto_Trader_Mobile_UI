@@ -73,6 +73,14 @@ function renderTierAllocation(tierAlloc, tierMode) {
 
   section.classList.remove("hidden");
 
+  if (tierAlloc.stale) {
+    const staleBanner = document.createElement("div");
+    staleBanner.className = "tier-stale-banner";
+    const asOf = tierAlloc.asOfDate ? ` from ${tierAlloc.asOfDate}` : "";
+    staleBanner.textContent = `Markets closed — showing last close${asOf}`;
+    card.appendChild(staleBanner);
+  }
+
   // Header with VIX/VXN
   const header = document.createElement("div");
   header.className = "tier-header";

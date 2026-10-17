@@ -39,6 +39,8 @@ public class TierAllocationStatus
     public string? SelectedAsset { get; set; }
     public string? Action { get; set; }
     public VvixStatus? Vvix { get; set; }
+    public string? AsOfDate { get; set; }
+    public bool Stale { get; set; }
 }
 
 public class TierInfo
