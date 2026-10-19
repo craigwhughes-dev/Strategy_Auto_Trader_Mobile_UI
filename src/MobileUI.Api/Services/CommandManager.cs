@@ -16,25 +16,28 @@ public interface ICommandManager
 
 public class CommandManager : ICommandManager
 {
-    private readonly string _commandsPath;
+    private readonly IActiveProfileService _activeProfile;
     private readonly IStatusReader _statusReader;
     private readonly ILogger<CommandManager> _logger;
 
-    public CommandManager(IConfiguration config, IStatusReader statusReader, ILogger<CommandManager> logger)
+    public CommandManager(IActiveProfileService activeProfile, IStatusReader statusReader, ILogger<CommandManager> logger)
     {
-        _commandsPath = config["DaemonState:CommandsPath"]
-            ?? throw new InvalidOperationException("DaemonState:CommandsPath not configured");
+        _activeProfile = activeProfile;
         _statusReader = statusReader;
         _logger = logger;
-        EnsureDirectories();
     }
 
-    private void EnsureDirectories()
+    // Commands dir follows whichever profile is currently active, which can
+    // change at runtime (UI toggle), so it's resolved fresh on every call
+    // rather than cached at construction.
+    private string EnsureDirectories()
     {
-        Directory.CreateDirectory(Path.Combine(_commandsPath, "pending"));
-        Directory.CreateDirectory(Path.Combine(_commandsPath, "processing"));
-        Directory.CreateDirectory(Path.Combine(_commandsPath, "results"));
-        Directory.CreateDirectory(Path.Combine(_commandsPath, "done"));
+        var commandsPath = _activeProfile.CurrentPaths.CommandsPath;
+        Directory.CreateDirectory(Path.Combine(commandsPath, "pending"));
+        Directory.CreateDirectory(Path.Combine(commandsPath, "processing"));
+        Directory.CreateDirectory(Path.Combine(commandsPath, "results"));
+        Directory.CreateDirectory(Path.Combine(commandsPath, "done"));
+        return commandsPath;
     }
 
     public async Task<string> CreateSellCommandAsync(string ticker)
@@ -101,7 +104,8 @@ public class CommandManager : ICommandManager
 
     private async Task<string> WriteCommandAsync(TradeCommand command)
     {
-        var pendingPath = Path.Combine(_commandsPath, "pending");
+        var commandsPath = EnsureDirectories();
+        var pendingPath = Path.Combine(commandsPath, "pending");
         var filePath = Path.Combine(pendingPath, $"{command.Id}.json");
 
         var json = JsonSerializer.Serialize(command, new JsonSerializerOptions { WriteIndented = true });
@@ -116,12 +120,13 @@ public class CommandManager : ICommandManager
 
     public async Task<TradeCommand?> GetCommandAsync(string id)
     {
+        var commandsPath = EnsureDirectories();
         var paths = new[]
         {
-            Path.Combine(_commandsPath, "pending", $"{id}.json"),
-            Path.Combine(_commandsPath, "processing", $"{id}.json"),
-            Path.Combine(_commandsPath, "results", $"{id}.json"),
-            Path.Combine(_commandsPath, "done", $"{id}.json")
+            Path.Combine(commandsPath, "pending", $"{id}.json"),
+            Path.Combine(commandsPath, "processing", $"{id}.json"),
+            Path.Combine(commandsPath, "results", $"{id}.json"),
+            Path.Combine(commandsPath, "done", $"{id}.json")
         };
 
         foreach (var path in paths)
@@ -138,7 +143,8 @@ public class CommandManager : ICommandManager
 
     public async Task<List<TradeCommand>> GetPendingCommandsAsync()
     {
-        var pendingPath = Path.Combine(_commandsPath, "pending");
+        var commandsPath = EnsureDirectories();
+        var pendingPath = Path.Combine(commandsPath, "pending");
         var commands = new List<TradeCommand>();
 
         if (!Directory.Exists(pendingPath))
@@ -164,8 +170,9 @@ public class CommandManager : ICommandManager
 
     public async Task<bool> CancelCommandAsync(string id)
     {
-        var pendingPath = Path.Combine(_commandsPath, "pending", $"{id}.json");
-        var donePath = Path.Combine(_commandsPath, "done", $"{id}.cancelled.json");
+        var commandsPath = EnsureDirectories();
+        var pendingPath = Path.Combine(commandsPath, "pending", $"{id}.json");
+        var donePath = Path.Combine(commandsPath, "done", $"{id}.cancelled.json");
 
         try
         {
@@ -185,7 +192,7 @@ public class CommandManager : ICommandManager
             {
                 command.Status = "cancelled";
                 var resultJson = JsonSerializer.Serialize(command, new JsonSerializerOptions { WriteIndented = true });
-                var resultsPath = Path.Combine(_commandsPath, "results", $"{id}.json");
+                var resultsPath = Path.Combine(commandsPath, "results", $"{id}.json");
                 var tempPath = resultsPath + ".tmp";
 
                 await File.WriteAllTextAsync(tempPath, resultJson);

@@ -11,7 +11,7 @@ public interface IStatusReader
 
 public class StatusReader : IStatusReader
 {
-    private readonly string _appStatusPath;
+    private readonly IActiveProfileService _activeProfile;
     private readonly ILogger<StatusReader> _logger;
     private const int SchemaVersion = 1;
     private const int StaleHeartbeatThresholdSeconds = 180;
@@ -28,20 +28,20 @@ public class StatusReader : IStatusReader
         return reader.ReadToEnd();
     }
 
-    public StatusReader(IConfiguration configuration, ILogger<StatusReader> logger)
+    public StatusReader(IActiveProfileService activeProfile, ILogger<StatusReader> logger)
     {
-        _appStatusPath = configuration["DaemonState:AppStatusPath"]
-            ?? throw new ArgumentException("DaemonState:AppStatusPath not configured");
+        _activeProfile = activeProfile;
         _logger = logger;
     }
 
     public DaemonStatus ReadStatus()
     {
+        var appStatusPath = _activeProfile.CurrentPaths.AppStatusPath;
         try
         {
-            if (!File.Exists(_appStatusPath))
+            if (!File.Exists(appStatusPath))
             {
-                _logger.LogWarning("app_status.json not found at {Path}", _appStatusPath);
+                _logger.LogWarning("app_status.json not found at {Path}", appStatusPath);
                 return new DaemonStatus
                 {
                     DaemonRunning = false,
@@ -49,7 +49,7 @@ public class StatusReader : IStatusReader
                 };
             }
 
-            var json = ReadAllTextNonLocking(_appStatusPath);
+            var json = ReadAllTextNonLocking(appStatusPath);
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
@@ -250,13 +250,14 @@ public class StatusReader : IStatusReader
     public Dictionary<string, Position> ReadPositions()
     {
         var positions = new Dictionary<string, Position>();
+        var appStatusPath = _activeProfile.CurrentPaths.AppStatusPath;
 
         try
         {
-            if (!File.Exists(_appStatusPath))
+            if (!File.Exists(appStatusPath))
                 return positions;
 
-            var json = ReadAllTextNonLocking(_appStatusPath);
+            var json = ReadAllTextNonLocking(appStatusPath);
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 

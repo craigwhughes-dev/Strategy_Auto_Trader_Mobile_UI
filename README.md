@@ -173,15 +173,25 @@ dotnet test tests/MobileUI.Api.Tests/  # Unit tests (16 tests)
 
 ### Configuration
 
-**API paths** ([appsettings.json](src/MobileUI.Api/appsettings.json)):
+**API paths** ([appsettings.json](src/MobileUI.Api/appsettings.json)) — one entry per daemon profile, plus which one the API starts on:
 ```json
 {
-  "DaemonState": {
-    "StatusPath": "C:\\path\\to\\Strategy_Auto_Trader\\state\\app_status.json",
-    "JournalPath": "C:\\path\\to\\Strategy_Auto_Trader\\data\\journals\\live.csv"
-  }
+  "DaemonProfiles": {
+    "Paper": {
+      "AppStatusPath": "C:\\path\\to\\Strategy_Auto_Trader\\state\\app_status.json",
+      "JournalPath": "C:\\path\\to\\Strategy_Auto_Trader\\data\\journals\\live.csv",
+      "CommandsPath": "C:\\path\\to\\Strategy_Auto_Trader\\state\\commands"
+    },
+    "Live": {
+      "AppStatusPath": "C:\\path\\to\\StrategyAutoTrader_Prod\\state\\app_status.json",
+      "JournalPath": "C:\\path\\to\\StrategyAutoTrader_Prod\\data\\journals\\live.csv",
+      "CommandsPath": "C:\\path\\to\\StrategyAutoTrader_Prod\\state\\commands"
+    }
+  },
+  "DefaultProfile": "Live"
 }
 ```
+The UI has a Paper/Live toggle (top right) that switches between these at runtime — no restart needed. The chosen profile persists to `state/active_profile.json` next to the running exe, so a restart keeps whatever was last selected; `DefaultProfile` only applies the first time (no persisted state file yet).
 
 **MAUI server**: set on the app's Settings tab (API URL + certificate thumbprint), stored in `Preferences` under `api_base_url` / `api_cert_thumbprint`. No rebuild needed to point the app at a different server.
 

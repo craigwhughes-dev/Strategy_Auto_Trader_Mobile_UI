@@ -125,16 +125,27 @@ Check output for specific assertion failures.
 
 ### API Configuration
 
-[src/MobileUI.Api/appsettings.json](src/MobileUI.Api/appsettings.json) — configure paths to Strategy_Auto_Trader:
+[src/MobileUI.Api/appsettings.json](src/MobileUI.Api/appsettings.json) — one profile per daemon (paper, live/real-money):
 
 ```json
 {
-  "DaemonState": {
-    "StatusPath": "C:\\path\\to\\Strategy_Auto_Trader\\state\\app_status.json",
-    "JournalPath": "C:\\path\\to\\Strategy_Auto_Trader\\data\\journals\\live.csv"
-  }
+  "DaemonProfiles": {
+    "Paper": {
+      "AppStatusPath": "C:\\path\\to\\Strategy_Auto_Trader\\state\\app_status.json",
+      "JournalPath": "C:\\path\\to\\Strategy_Auto_Trader\\data\\journals\\live.csv",
+      "CommandsPath": "C:\\path\\to\\Strategy_Auto_Trader\\state\\commands"
+    },
+    "Live": {
+      "AppStatusPath": "C:\\path\\to\\StrategyAutoTrader_Prod\\state\\app_status.json",
+      "JournalPath": "C:\\path\\to\\StrategyAutoTrader_Prod\\data\\journals\\live.csv",
+      "CommandsPath": "C:\\path\\to\\StrategyAutoTrader_Prod\\state\\commands"
+    }
+  },
+  "DefaultProfile": "Live"
 }
 ```
+
+The running UI's Paper/Live toggle switches between these without a restart; the choice persists to `state/active_profile.json` next to the exe, which takes precedence over `DefaultProfile` once it exists.
 
 ---
 

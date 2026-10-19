@@ -84,6 +84,20 @@ public class ApiKeyAuthenticationMiddlewareTests
 
         Assert.That(response.StatusCode, Is.Not.EqualTo(System.Net.HttpStatusCode.Unauthorized));
     }
+
+    [Test]
+    public async Task ProfileSwitchEndpoint_WithoutApiKey_Proceeds()
+    {
+        // Exempt from the blanket gate — ProfileEndpoints.SwitchProfile enforces
+        // the key itself, and only when escalating to the live profile.
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/profile/switch")
+        {
+            Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json")
+        };
+        var response = await _client.SendAsync(request);
+
+        Assert.That(response.StatusCode, Is.Not.EqualTo(System.Net.HttpStatusCode.Unauthorized));
+    }
 }
 
 internal class MockAuthHandler : HttpMessageHandler

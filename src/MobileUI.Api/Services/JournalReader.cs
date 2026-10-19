@@ -10,29 +10,29 @@ public interface IJournalReader
 
 public class JournalReader : IJournalReader
 {
-    private readonly string _journalPath;
+    private readonly IActiveProfileService _activeProfile;
     private readonly ILogger<JournalReader> _logger;
 
-    public JournalReader(IConfiguration configuration, ILogger<JournalReader> logger)
+    public JournalReader(IActiveProfileService activeProfile, ILogger<JournalReader> logger)
     {
-        _journalPath = configuration["DaemonState:JournalPath"]
-            ?? throw new ArgumentException("DaemonState:JournalPath not configured");
+        _activeProfile = activeProfile;
         _logger = logger;
     }
 
     public List<TradeRecord> ReadRecentTrades(int count = 20)
     {
         var trades = new List<TradeRecord>();
+        var journalPath = _activeProfile.CurrentPaths.JournalPath;
 
         try
         {
-            if (!File.Exists(_journalPath))
+            if (!File.Exists(journalPath))
             {
-                _logger.LogWarning("Journal file not found at {Path}", _journalPath);
+                _logger.LogWarning("Journal file not found at {Path}", journalPath);
                 return trades;
             }
 
-            using var parser = new TextFieldParser(_journalPath)
+            using var parser = new TextFieldParser(journalPath)
             {
                 TextFieldType = FieldType.Delimited,
                 Delimiters = new[] { "," },

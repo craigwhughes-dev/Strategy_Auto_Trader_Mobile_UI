@@ -69,6 +69,67 @@ body {
 
 .icon-btn:active { opacity: 0.7; }
 
+.profile-switch-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-switch-text {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.profile-switch {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #34d399, #3b82f6);
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.profile-switch:active { opacity: 0.85; }
+.profile-switch:disabled { opacity: 0.5; cursor: default; }
+
+.profile-switch.live {
+  background: var(--loss);
+}
+
+.profile-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease;
+}
+
+.profile-switch.live .profile-switch-thumb {
+  transform: translateX(24px);
+}
+
+.live-banner {
+  background: var(--loss);
+  color: white;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 0.02em;
+  padding: 8px 10px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
 .card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);

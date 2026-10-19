@@ -12,10 +12,18 @@
   <div class="topbar">
     <h1>Strategy Auto Trader</h1>
     <div class="topbar-actions">
+      <div class="profile-switch-group">
+        <span id="profileLabel" class="profile-switch-text hidden"></span>
+        <button id="profileBtn" class="profile-switch hidden" role="switch" aria-checked="false" title="Switch between paper and live trading">
+          <span class="profile-switch-thumb"></span>
+        </button>
+      </div>
       <button id="refreshBtn" class="icon-btn" title="Refresh now">&#8635;</button>
       <button id="settingsBtn" class="icon-btn" title="API key">&#9881;</button>
     </div>
   </div>
+
+  <div id="liveBanner" class="live-banner hidden">&#9888; LIVE &mdash; real money</div>
 
   <div id="settingsPanel" class="card settings-panel hidden">
     <label for="apiKeyInput">API key <span class="caption">(required for Sell / Pause / Resume / Cancel)</span></label>

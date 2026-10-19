@@ -9,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<AuditOptions>(builder.Configuration.GetSection("Audit"));
 builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IActiveProfileService, ActiveProfileService>();
+builder.Services.AddSingleton<IApiKeyValidator, ApiKeyValidator>();
 builder.Services.AddSingleton<IStatusReader, StatusReader>();
 builder.Services.AddSingleton<IJournalReader, JournalReader>();
 builder.Services.AddSingleton<ICommandManager, CommandManager>();
@@ -167,6 +169,7 @@ app.UseMiddleware<AuditLoggingMiddleware>();
 app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
 
 app.MapPositionsEndpoints();
+app.MapProfileEndpoints();
 
 var tradeCommandsEnabled = app.Configuration.GetValue<bool>("Features:TradeCommands");
 if (tradeCommandsEnabled)

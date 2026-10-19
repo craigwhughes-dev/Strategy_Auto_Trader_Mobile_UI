@@ -205,6 +205,29 @@ function renderTierAllocation(tierAlloc, tierMode) {
   }
 }
 
+function renderProfile(profile) {
+  const btn = el("profileBtn");
+  const label = el("profileLabel");
+  const banner = el("liveBanner");
+
+  if (!profile) {
+    btn.classList.add("hidden");
+    label.classList.add("hidden");
+    banner.classList.add("hidden");
+    return;
+  }
+
+  const isLive = (profile.current || "").toLowerCase() === "live";
+  btn.classList.remove("hidden");
+  label.classList.remove("hidden");
+  label.textContent = profile.current.toUpperCase();
+  btn.classList.toggle("live", isLive);
+  btn.setAttribute("aria-checked", String(isLive));
+  btn.dataset.current = profile.current;
+  btn.dataset.available = JSON.stringify(profile.available || []);
+  banner.classList.toggle("hidden", !isLive);
+}
+
 function renderHealth(health) {
   const dot = el("statusDot");
   const text = el("statusText");
@@ -391,17 +414,19 @@ function renderTrades(trades) {
 async function refreshAll() {
   el("statusMessage").textContent = "Loading...";
   try {
-    const [health, positions, trades, commands] = await Promise.all([
+    const [health, positions, trades, commands, profile] = await Promise.all([
       apiGet("/api/health"),
       apiGet("/api/positions"),
       apiGet("/api/trades/recent?count=20"),
       apiGet("/api/trades/commands").catch(() => []),
+      apiGet("/api/profile").catch(() => null),
     ]);
     renderHealth(health);
     renderTierAllocation(health.tierAllocation, health.tierMode);
     renderPositions(positions);
     renderTrades(trades);
     renderCommands(commands);
+    renderProfile(profile);
     el("statusMessage").textContent = "Updated";
   } catch (err) {
     console.error(err);
@@ -509,6 +534,24 @@ async function resumeBuying() {
   });
 }
 
+async function switchProfile() {
+  const btn = el("profileBtn");
+  const current = btn.dataset.current;
+  const available = JSON.parse(btn.dataset.available || "[]");
+  const next = available.find((p) => p !== current);
+  if (!next) return;
+
+  await withButtonDisabled(btn, async () => {
+    try {
+      const response = await apiSend("POST", "/api/profile/switch", { profile: next });
+      showToast(`Switched to ${response.current}`);
+      await refreshAll();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+}
+
 async function cancelCommand(id, button) {
   await withButtonDisabled(button, async () => {
     try {
@@ -524,6 +567,7 @@ async function cancelCommand(id, button) {
 // ---- Wiring ----
 
 el("refreshBtn").addEventListener("click", refreshAll);
+el("profileBtn").addEventListener("click", switchProfile);
 el("sellAllBtn").addEventListener("click", sellAll);
 el("pauseBtn").addEventListener("click", pauseBuying);
 el("resumeBtn").addEventListener("click", resumeBuying);

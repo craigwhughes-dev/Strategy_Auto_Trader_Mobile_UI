@@ -18,10 +18,10 @@ REQUIRED CONFIGURATION:
      - GET requests (/api/positions, /api/health, /api/trades/recent) do not require the key
      - See src/MobileUI.Api/Middleware/ApiKeyAuthenticationMiddleware.cs
 
-  3. Daemon state paths (configured in appsettings.json or environment):
-     - DaemonState:AppStatusPath: C:\path\to\Strategy_Auto_Trader\state\app_status.json
-     - DaemonState:JournalPath: C:\path\to\Strategy_Auto_Trader\data\journals\live.csv
-     - DaemonState:CommandsPath: C:\path\to\Strategy_Auto_Trader\state\commands
+  3. Daemon profile paths (configured in appsettings.json, under DaemonProfiles:<Name>):
+     - DaemonProfiles:Paper:AppStatusPath / JournalPath / CommandsPath
+     - DaemonProfiles:Live:AppStatusPath / JournalPath / CommandsPath
+     - DefaultProfile: which one to use until the UI's Paper/Live toggle is switched
 
   4. Tailscale IP (optional, for remote access):
      - TAILSCALE_INTERFACE_IP: e.g. 100.x.x.x
@@ -116,7 +116,7 @@ Write-Host ""
 Write-Host "IMPORTANT: Before the task runs, ensure:"
 Write-Host "  1. CERTIFICATE_THUMBPRINT environment variable is set (or update appsettings.json)"
 Write-Host "  2. STRATEGY_API_KEY environment variable is set"
-Write-Host "  3. DaemonState paths in appsettings.json point to valid Strategy_Auto_Trader directories"
+Write-Host "  3. DaemonProfiles paths in appsettings.json point to valid Strategy_Auto_Trader directories"
 Write-Host ""
 Write-Host "The task will start automatically at next user logon."
 Write-Host "To start it now, run: Start-ScheduledTask -TaskName '$taskName'"

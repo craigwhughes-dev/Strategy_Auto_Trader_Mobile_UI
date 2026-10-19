@@ -1,6 +1,5 @@
 using MobileUI.Api.Models;
 using MobileUI.Api.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
@@ -10,7 +9,6 @@ namespace MobileUI.Api.Tests.Services;
 public class CommandManagerTests
 {
     private CommandManager _manager = null!;
-    private IConfiguration _config = null!;
     private ILogger<CommandManager> _logger = null!;
     private IStatusReader _statusReader = null!;
     private string _commandsPath = null!;
@@ -19,16 +17,15 @@ public class CommandManagerTests
     public void Setup()
     {
         _commandsPath = Path.Combine(Path.GetTempPath(), $"test-commands-{Guid.NewGuid()}");
-        var configBuilder = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["DaemonState:CommandsPath"] = _commandsPath,
-            });
-
-        _config = configBuilder.Build();
+        var activeProfile = new FakeActiveProfileService(new DaemonProfilePaths
+        {
+            AppStatusPath = Path.Combine(_commandsPath, "app_status.json"),
+            JournalPath = Path.Combine(_commandsPath, "live.csv"),
+            CommandsPath = _commandsPath,
+        });
         _logger = new MockLogger<CommandManager>();
         _statusReader = new MockStatusReader();
-        _manager = new CommandManager(_config, _statusReader, _logger);
+        _manager = new CommandManager(activeProfile, _statusReader, _logger);
     }
 
     [TearDown]

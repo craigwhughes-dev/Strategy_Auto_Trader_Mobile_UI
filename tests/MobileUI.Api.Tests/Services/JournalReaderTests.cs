@@ -1,5 +1,5 @@
+using MobileUI.Api.Models;
 using MobileUI.Api.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
@@ -9,7 +9,6 @@ namespace MobileUI.Api.Tests.Services;
 public class JournalReaderTests
 {
     private JournalReader _reader = null!;
-    private IConfiguration _config = null!;
     private ILogger<JournalReader> _logger = null!;
     private string _journalPath = null!;
 
@@ -17,15 +16,14 @@ public class JournalReaderTests
     public void Setup()
     {
         _journalPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "live.csv");
-        var configBuilder = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["DaemonState:JournalPath"] = _journalPath,
-            });
-
-        _config = configBuilder.Build();
+        var activeProfile = new FakeActiveProfileService(new DaemonProfilePaths
+        {
+            AppStatusPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json"),
+            JournalPath = _journalPath,
+            CommandsPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "commands"),
+        });
         _logger = new MockLogger<JournalReader>();
-        _reader = new JournalReader(_config, _logger);
+        _reader = new JournalReader(activeProfile, _logger);
     }
 
     [TearDown]
