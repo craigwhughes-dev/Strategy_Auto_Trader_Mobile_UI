@@ -314,6 +314,13 @@ body {
 .metric-label { font-size: 12px; color: var(--text-secondary); }
 .metric-value { font-size: 14px; margin-top: 2px; }
 
+.shadow-card {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+.shadow-card .caption { font-style: italic; }
+
 .trade-card {
   display: flex;
   align-items: center;

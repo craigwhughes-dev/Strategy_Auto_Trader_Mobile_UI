@@ -328,6 +328,55 @@ function renderPositions(positions) {
   }
 }
 
+function renderShadowBenchmark(shadow) {
+  const container = el("shadowBenchmarkCard");
+  clear(container);
+  if (!shadow) return;
+
+  const card = document.createElement("div");
+  card.className = "card position-card shadow-card";
+
+  const topRow = document.createElement("div");
+  topRow.className = "top-row";
+
+  const tickerGroup = document.createElement("div");
+  tickerGroup.className = "ticker-group";
+  const label = document.createElement("span");
+  label.className = "caption";
+  label.textContent = `SHADOW: stayed in ${shadow.ticker}`;
+  tickerGroup.appendChild(label);
+
+  const pnl = document.createElement("span");
+  const pnlValue = shadow.pnlGbp;
+  pnl.className = `pnl ${pnlValue > 0 ? "profit" : pnlValue < 0 ? "loss" : ""}`;
+  pnl.textContent = `${fmtSigned(pnlValue)} (${pnlValue > 0 ? "+" : ""}${shadow.pnlPct}%)`;
+
+  topRow.append(tickerGroup, pnl);
+
+  const metricsRow = document.createElement("div");
+  metricsRow.className = "metrics-row";
+  const metric = (label, value) => {
+    const wrap = document.createElement("div");
+    const l = document.createElement("div");
+    l.className = "metric-label";
+    l.textContent = label;
+    const v = document.createElement("div");
+    v.className = "metric-value";
+    v.textContent = value;
+    wrap.append(l, v);
+    return wrap;
+  };
+  metricsRow.append(
+    metric("Since", shadow.since || "-"),
+    metric("Amount", Number(shadow.amountGbp).toFixed(0)),
+    metric("Entry", Number(shadow.entryPrice).toFixed(2)),
+    metric("Value", Number(shadow.valueGbp).toFixed(2))
+  );
+
+  card.append(topRow, metricsRow);
+  container.appendChild(card);
+}
+
 function renderCommands(commands) {
   const header = el("pendingHeader");
   const list = el("pendingList");
@@ -424,6 +473,7 @@ async function refreshAll() {
     renderHealth(health);
     renderTierAllocation(health.tierAllocation, health.tierMode);
     renderPositions(positions);
+    renderShadowBenchmark(health.shadowBenchmark);
     renderTrades(trades);
     renderCommands(commands);
     renderProfile(profile);

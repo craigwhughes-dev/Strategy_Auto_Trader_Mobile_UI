@@ -234,6 +234,22 @@ public class StatusReader : IStatusReader
                 }
             }
 
+            if (root.TryGetProperty("shadow_benchmark", out var shadowEl) && shadowEl.ValueKind != JsonValueKind.Null)
+            {
+                status.ShadowBenchmark = new ShadowBenchmarkStatus
+                {
+                    Ticker = shadowEl.TryGetProperty("ticker", out var sTicker) ? sTicker.GetString() ?? "" : "",
+                    Since = shadowEl.TryGetProperty("since", out var sSince) ? sSince.GetString() : null,
+                    AsOf = shadowEl.TryGetProperty("as_of", out var sAsOf) ? sAsOf.GetString() : null,
+                    AmountGbp = shadowEl.TryGetProperty("amount_gbp", out var sAmount) ? sAmount.GetDouble() : 0,
+                    EntryPrice = shadowEl.TryGetProperty("entry_price", out var sEntry) ? sEntry.GetDouble() : 0,
+                    LatestPrice = shadowEl.TryGetProperty("latest_price", out var sLatest) ? sLatest.GetDouble() : 0,
+                    ValueGbp = shadowEl.TryGetProperty("value_gbp", out var sValue) ? sValue.GetDouble() : 0,
+                    PnlGbp = shadowEl.TryGetProperty("pnl_gbp", out var sPnlGbp) ? sPnlGbp.GetDouble() : 0,
+                    PnlPct = shadowEl.TryGetProperty("pnl_pct", out var sPnlPct) ? sPnlPct.GetDouble() : 0,
+                };
+            }
+
             return status;
         }
         catch (Exception ex)

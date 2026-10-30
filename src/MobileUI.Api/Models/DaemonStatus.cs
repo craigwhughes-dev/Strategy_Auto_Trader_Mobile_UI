@@ -13,6 +13,7 @@ public class DaemonStatus
     public TradesDaily? TradesDaily { get; set; }
     public Dictionary<string, MarketStatus> Markets { get; set; } = new();
     public TierAllocationStatus? TierAllocation { get; set; }
+    public ShadowBenchmarkStatus? ShadowBenchmark { get; set; }
     public string? Error { get; set; }
 }
 
@@ -78,4 +79,17 @@ public class VxnPair
 {
     public double Enter { get; set; }
     public double Exit { get; set; }
+}
+
+public class ShadowBenchmarkStatus
+{
+    public string Ticker { get; set; } = string.Empty;
+    public string? Since { get; set; }
+    public string? AsOf { get; set; }
+    public double AmountGbp { get; set; }
+    public double EntryPrice { get; set; }
+    public double LatestPrice { get; set; }
+    public double ValueGbp { get; set; }
+    public double PnlGbp { get; set; }
+    public double PnlPct { get; set; }
 }
