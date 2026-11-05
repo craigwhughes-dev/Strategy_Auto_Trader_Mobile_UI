@@ -14,6 +14,7 @@ public class DaemonStatus
     public Dictionary<string, MarketStatus> Markets { get; set; } = new();
     public TierAllocationStatus? TierAllocation { get; set; }
     public ShadowBenchmarkStatus? ShadowBenchmark { get; set; }
+    public CrashRecoveryOverrideStatus? CrashRecoveryOverride { get; set; }
     public string? Error { get; set; }
 }
 
@@ -92,4 +93,31 @@ public class ShadowBenchmarkStatus
     public double ValueGbp { get; set; }
     public double PnlGbp { get; set; }
     public double PnlPct { get; set; }
+}
+
+public class CrashRecoveryOverrideStatus
+{
+    public bool Enabled { get; set; }
+    public bool EpisodeActive { get; set; }
+    public string? EpisodePeakDate { get; set; }
+    public bool ExitedToCash { get; set; }
+    public double? HygRatio { get; set; }
+    public int HygConfirmStreak { get; set; }
+    public int HygExitStreak { get; set; }
+    public bool HygStickyArmed { get; set; }
+    public bool? NasdaqRising { get; set; }
+    public bool Fired { get; set; }
+    public bool Active { get; set; }
+    public bool Resolved { get; set; }
+    public string? AsOfDate { get; set; }
+    public CrashRecoveryOverrideThresholds? Thresholds { get; set; }
+}
+
+public class CrashRecoveryOverrideThresholds
+{
+    public double HygRecoveryThreshold { get; set; }
+    public int ConfirmDays { get; set; }
+    public int ExitConfirmDays { get; set; }
+    public int RiseDays { get; set; }
+    public double MinDepth { get; set; }
 }

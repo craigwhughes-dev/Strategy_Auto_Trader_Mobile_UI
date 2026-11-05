@@ -338,4 +338,93 @@ public class StatusReaderTests
 
         File.Delete(testFile);
     }
+
+    [Test]
+    public void ReadStatus_ParsesCrashRecoveryOverride()
+    {
+        var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
+        var recentHeartbeat = DateTime.UtcNow.ToString("O");
+        var json = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{recentHeartbeat}"",
+  ""daemon_pid"": 123,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{}},
+  ""positions"": {{}},
+  ""crash_recovery_override"": {{
+    ""enabled"": true,
+    ""episode_active"": true,
+    ""episode_peak_date"": ""2026-03-01"",
+    ""exited_to_cash"": true,
+    ""hyg_ratio"": 0.952,
+    ""hyg_confirm_streak"": 2,
+    ""hyg_exit_streak"": 0,
+    ""hyg_sticky_armed"": false,
+    ""nasdaq_rising"": false,
+    ""fired"": false,
+    ""active"": false,
+    ""resolved"": false,
+    ""as_of_date"": ""2026-11-03"",
+    ""thresholds"": {{
+      ""hyg_recovery_threshold"": 0.9,
+      ""confirm_days"": 5,
+      ""exit_confirm_days"": 5,
+      ""rise_days"": 10,
+      ""min_depth"": 0.2
+    }}
+  }}
+}}";
+
+        File.WriteAllText(testFile, json);
+
+        var status = _reader.ReadStatus();
+
+        var cro = status.CrashRecoveryOverride;
+        Assert.That(cro, Is.Not.Null);
+        Assert.That(cro!.Enabled, Is.True);
+        Assert.That(cro.EpisodeActive, Is.True);
+        Assert.That(cro.EpisodePeakDate, Is.EqualTo("2026-03-01"));
+        Assert.That(cro.ExitedToCash, Is.True);
+        Assert.That(cro.HygRatio, Is.EqualTo(0.952));
+        Assert.That(cro.HygConfirmStreak, Is.EqualTo(2));
+        Assert.That(cro.HygStickyArmed, Is.False);
+        Assert.That(cro.NasdaqRising, Is.False);
+        Assert.That(cro.Active, Is.False);
+        Assert.That(cro.Thresholds, Is.Not.Null);
+        Assert.That(cro.Thresholds!.ConfirmDays, Is.EqualTo(5));
+        Assert.That(cro.Thresholds.HygRecoveryThreshold, Is.EqualTo(0.9));
+
+        File.Delete(testFile);
+    }
+
+    [Test]
+    public void ReadStatus_MissingCrashRecoveryOverride_IsNull()
+    {
+        var testFile = Path.Combine(TestContext.CurrentContext.TestDirectory, "app_status.json");
+        var recentHeartbeat = DateTime.UtcNow.ToString("O");
+        var json = $@"{{
+  ""schema_version"": 1,
+  ""heartbeat_utc"": ""{recentHeartbeat}"",
+  ""daemon_pid"": 123,
+  ""dry_run"": false,
+  ""halt_new_entries"": false,
+  ""reconciliation_discrepancies"": [],
+  ""last_reconcile_date"": ""2026-07-06"",
+  ""trades_today"": {{""date"": ""2026-07-07"", ""buys"": 0, ""sells"": 0}},
+  ""markets"": {{}},
+  ""positions"": {{}}
+}}";
+
+        File.WriteAllText(testFile, json);
+
+        var status = _reader.ReadStatus();
+
+        Assert.That(status.CrashRecoveryOverride, Is.Null);
+
+        File.Delete(testFile);
+    }
 }

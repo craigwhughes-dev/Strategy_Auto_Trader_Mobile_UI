@@ -205,6 +205,52 @@ function renderTierAllocation(tierAlloc, tierMode) {
   }
 }
 
+function renderCrashRecoveryOverride(cro) {
+  const container = el("crashRecoveryOverrideCard");
+  clear(container);
+  if (!cro || !cro.enabled) return;
+
+  const card = document.createElement("div");
+  card.className = "card cro-card";
+
+  const headerRow = document.createElement("div");
+  headerRow.className = "cro-header";
+  const title = document.createElement("span");
+  title.className = "caption";
+  title.textContent = "CRASH RECOVERY OVERRIDE";
+  const badge = document.createElement("span");
+  badge.className = `pill ${cro.active ? "active" : "inactive"}`;
+  badge.textContent = cro.active ? "ACTIVE" : "INACTIVE";
+  headerRow.append(title, badge);
+  card.appendChild(headerRow);
+
+  if (cro.episodeActive) {
+    const detail = document.createElement("div");
+    detail.className = "cro-detail caption";
+    const parts = [cro.exitedToCash ? "exited to cash" : "watching"];
+    if (cro.hygRatio !== null && cro.hygRatio !== undefined) {
+      const confirmDays = cro.thresholds?.confirmDays ?? "?";
+      parts.push(`HYG ${(cro.hygRatio * 100).toFixed(1)}% (${cro.hygConfirmStreak}/${confirmDays}d, armed=${cro.hygStickyArmed ? "Y" : "N"})`);
+    }
+    if (cro.nasdaqRising !== null && cro.nasdaqRising !== undefined) {
+      parts.push(`Nasdaq rising: ${cro.nasdaqRising ? "Y" : "N"}`);
+    }
+    if (cro.fired) parts.push("FIRED");
+    if (cro.resolved) parts.push("resolved");
+    detail.textContent = parts.join(" · ");
+    card.appendChild(detail);
+
+    if (cro.episodePeakDate) {
+      const peak = document.createElement("div");
+      peak.className = "caption";
+      peak.textContent = `Episode peak: ${cro.episodePeakDate}`;
+      card.appendChild(peak);
+    }
+  }
+
+  container.appendChild(card);
+}
+
 function renderProfile(profile) {
   const btn = el("profileBtn");
   const label = el("profileLabel");
@@ -472,6 +518,7 @@ async function refreshAll() {
     ]);
     renderHealth(health);
     renderTierAllocation(health.tierAllocation, health.tierMode);
+    renderCrashRecoveryOverride(health.crashRecoveryOverride);
     renderPositions(positions);
     renderShadowBenchmark(health.shadowBenchmark);
     renderTrades(trades);

@@ -250,6 +250,42 @@ public class StatusReader : IStatusReader
                 };
             }
 
+            if (root.TryGetProperty("crash_recovery_override", out var croEl) && croEl.ValueKind != JsonValueKind.Null)
+            {
+                var cro = new CrashRecoveryOverrideStatus
+                {
+                    Enabled = croEl.TryGetProperty("enabled", out var croEnabled) && croEnabled.GetBoolean(),
+                    EpisodeActive = croEl.TryGetProperty("episode_active", out var croEpActive) && croEpActive.GetBoolean(),
+                    EpisodePeakDate = croEl.TryGetProperty("episode_peak_date", out var croPeak) && croPeak.ValueKind != JsonValueKind.Null
+                        ? croPeak.GetString() : null,
+                    ExitedToCash = croEl.TryGetProperty("exited_to_cash", out var croExited) && croExited.GetBoolean(),
+                    HygConfirmStreak = croEl.TryGetProperty("hyg_confirm_streak", out var croConfirmStreak) ? croConfirmStreak.GetInt32() : 0,
+                    HygExitStreak = croEl.TryGetProperty("hyg_exit_streak", out var croExitStreak) ? croExitStreak.GetInt32() : 0,
+                    HygStickyArmed = croEl.TryGetProperty("hyg_sticky_armed", out var croArmed) && croArmed.GetBoolean(),
+                    Fired = croEl.TryGetProperty("fired", out var croFired) && croFired.GetBoolean(),
+                    Active = croEl.TryGetProperty("active", out var croActive) && croActive.GetBoolean(),
+                    Resolved = croEl.TryGetProperty("resolved", out var croResolved) && croResolved.GetBoolean(),
+                    AsOfDate = croEl.TryGetProperty("as_of_date", out var croAsOf) && croAsOf.ValueKind != JsonValueKind.Null
+                        ? croAsOf.GetString() : null,
+                };
+                if (croEl.TryGetProperty("hyg_ratio", out var croRatio) && croRatio.ValueKind != JsonValueKind.Null)
+                    cro.HygRatio = croRatio.GetDouble();
+                if (croEl.TryGetProperty("nasdaq_rising", out var croRising) && croRising.ValueKind != JsonValueKind.Null)
+                    cro.NasdaqRising = croRising.GetBoolean();
+                if (croEl.TryGetProperty("thresholds", out var croThresholds) && croThresholds.ValueKind != JsonValueKind.Null)
+                {
+                    cro.Thresholds = new CrashRecoveryOverrideThresholds
+                    {
+                        HygRecoveryThreshold = croThresholds.TryGetProperty("hyg_recovery_threshold", out var thHyg) ? thHyg.GetDouble() : 0,
+                        ConfirmDays = croThresholds.TryGetProperty("confirm_days", out var thConfirm) ? thConfirm.GetInt32() : 0,
+                        ExitConfirmDays = croThresholds.TryGetProperty("exit_confirm_days", out var thExit) ? thExit.GetInt32() : 0,
+                        RiseDays = croThresholds.TryGetProperty("rise_days", out var thRise) ? thRise.GetInt32() : 0,
+                        MinDepth = croThresholds.TryGetProperty("min_depth", out var thDepth) ? thDepth.GetDouble() : 0,
+                    };
+                }
+                status.CrashRecoveryOverride = cro;
+            }
+
             return status;
         }
         catch (Exception ex)
